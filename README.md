@@ -45,6 +45,55 @@ camera + IMU  ──WS──►  FastAPI WebSocket Hub ──►  DroneState (fr
 
 ---
 
+## Kurulum (ilk kez çalıştırmak için)
+
+### 1. Ön gereksinimler
+
+| Araç | Kurulum |
+|------|---------|
+| Python 3.11+ | `sudo apt install python3.11` |
+| [uv](https://docs.astral.sh/uv/) | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| [Ollama](https://ollama.com/) | `curl -fsSL https://ollama.com/install.sh \| sh` |
+| openssl | genellikle kurulu gelir |
+
+### 2. Repoyu klonla ve bağımlılıkları kur
+
+```bash
+git clone https://github.com/ozgurk33/Agentic_IOT_Drone_Project.git
+cd Agentic_IOT_Drone_Project
+uv sync
+```
+
+### 3. Ortam dosyasını oluştur
+
+```bash
+cp .env.example .env
+```
+
+`.env` içinde `OLLAMA_MODEL` ve `OLLAMA_BASE_URL` değerlerini kontrol et — varsayılanlar tek makineli demo için yeterli.
+
+### 4. Ollama modelini çek
+
+```bash
+ollama pull llava:7b          # varsayılan, ~4.7 GB
+# ollama pull qwen2.5vl:7b   # engel tespiti için önerilen
+```
+
+### 5. HTTPS sertifikası oluştur (telefon kamerası için zorunlu)
+
+Telefon kamerası (`getUserMedia`) LAN üzerinde **HTTPS gerektiriyor**.
+Kendi bilgisayarının IP adresini öğren (`ip a` veya `hostname -I`), sonra:
+
+```bash
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem \
+  -days 365 -nodes -subj "/CN=192.168.X.X"
+# 192.168.X.X yerine kendi IP'ni yaz
+```
+
+> `cert.pem` / `key.pem` dosyaları `.gitignore`'dadır, repoya gitmez — her makine kendi sertifikasını üretmeli.
+
+---
+
 ## Quick start
 
 ```bash
