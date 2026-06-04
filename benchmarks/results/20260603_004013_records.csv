@@ -1,0 +1,225 @@
+ts,mode,action,latency_ms,tilt_deg,hazard_level,motor_speed,confidence,reasoning,used_vision,ok,error,scenario
+1780436400.6824267,traditional,HOVER,0.01777700163074769,0.0,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6824458,traditional,HOVER,0.007889000698924065,0.6543893935923044,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6824586,traditional,HOVER,0.005916999725741334,1.236739606139474,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6824663,traditional,HOVER,0.00392299989471212,1.682941969615793,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.682473,traditional,HOVER,0.003622000804170966,1.9438758027266254,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6824803,traditional,HOVER,0.004188999810139649,1.9908159155035299,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6824868,traditional,HOVER,0.0035570010368246585,1.8185948536513634,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6825109,traditional,HOVER,0.014027000361238606,1.446171763476649,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.682528,traditional,HOVER,0.007211001502582803,0.914545253271624,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6825364,traditional,HOVER,0.004636000085156411,0.2822400161197344,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6825438,traditional,HOVER,0.003962999471696094,0.38113592575097077,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.682552,traditional,HOVER,0.0035829998523695394,1.0025540971766895,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.682558,traditional,HOVER,0.0032080006349133328,1.5136049906158564,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6825635,traditional,HOVER,0.0030369992600753903,1.8580290025415238,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6825695,traditional,HOVER,0.003242001184844412,1.9979098341958565,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6825778,traditional,HOVER,0.005617999704554677,1.917848549326277,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6825857,traditional,HOVER,0.005026999133406207,1.62665878313516,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6825917,traditional,HOVER,0.003364999429322779,1.1563964834886178,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6826,traditional,HOVER,0.0044529988372232765,0.5588309963978517,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.6826057,traditional,HOVER,0.0033269989216933027,0.10025401976434545,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780436400.8233151,agentic,HOVER,140.6104249999771,0.0,NONE,50,0.88,Tilt 0.0° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436400.875225,agentic,HOVER,51.788114998998935,0.6543893935923044,NONE,50,0.88,Tilt 0.7° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436400.9616842,agentic,HOVER,86.33973200085165,1.236739606139474,NONE,50,0.88,Tilt 1.2° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436401.040814,agentic,HOVER,79.00790699932259,1.682941969615793,NONE,50,0.88,Tilt 1.7° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436401.191049,agentic,HOVER,150.12227700026415,1.9438758027266254,NONE,50,0.88,Tilt 1.9° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436401.3330245,agentic,HOVER,141.8421660000604,1.9908159155035299,NONE,50,0.88,Tilt 2.0° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436401.5059643,agentic,HOVER,172.8292389998387,1.8185948536513634,NONE,50,0.88,Tilt 1.8° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436401.5657456,agentic,HOVER,59.650261000570026,1.446171763476649,NONE,50,0.88,Tilt 1.4° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436401.672523,agentic,HOVER,106.67425099927641,0.914545253271624,NONE,50,0.88,Tilt 0.9° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436401.7230651,agentic,HOVER,50.449156000468065,0.2822400161197344,NONE,50,0.88,Tilt 0.3° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436401.7997196,agentic,HOVER,76.5366890009318,0.38113592575097077,NONE,50,0.88,Tilt 0.4° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436401.9189363,agentic,HOVER,119.09139199997298,1.0025540971766895,NONE,50,0.88,Tilt 1.0° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436401.9707334,agentic,HOVER,51.682864999747835,1.5136049906158564,NONE,50,0.88,Tilt 1.5° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436402.0450604,agentic,HOVER,74.23120599924005,1.8580290025415238,NONE,50,0.88,Tilt 1.9° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436402.1823509,agentic,HOVER,137.16983099948266,1.9979098341958565,NONE,50,0.88,Tilt 2.0° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436402.3061209,agentic,HOVER,123.65302900070674,1.917848549326277,NONE,50,0.88,Tilt 1.9° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436402.3833258,agentic,HOVER,77.10864600085188,1.62665878313516,NONE,50,0.88,Tilt 1.6° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436402.5115926,agentic,HOVER,128.1760089987074,1.1563964834886178,NONE,50,0.88,Tilt 1.2° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436402.6711087,agentic,HOVER,159.41354200003843,0.5588309963978517,NONE,50,0.88,Tilt 0.6° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436402.7182012,agentic,HOVER,46.97362299884844,0.10025401976434545,NONE,50,0.88,Tilt 0.1° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780436402.7182536,traditional,HOVER,0.02124900129274465,0.0,,50,1.0,rule:HOVER,False,True,,gradual_tilt
+1780436402.718277,traditional,HOVER,0.012237998816999607,1.7391304347826086,,50,1.0,rule:HOVER,False,True,,gradual_tilt
+1780436402.7182949,traditional,HOVER,0.009818000762606971,3.4782608695652173,,50,1.0,rule:HOVER,False,True,,gradual_tilt
+1780436402.718311,traditional,HOVER,0.009421000868314877,5.217391304347826,,50,1.0,rule:HOVER,False,True,,gradual_tilt
+1780436402.7183287,traditional,HOVER,0.010362999091739766,6.956521739130435,,50,1.0,rule:HOVER,False,True,,gradual_tilt
+1780436402.718342,traditional,HOVER,0.007393000487354584,8.695652173913043,,50,1.0,rule:HOVER,False,True,,gradual_tilt
+1780436402.718356,traditional,HOVER,0.007884000297053717,10.434782608695652,,50,1.0,rule:HOVER,False,True,,gradual_tilt
+1780436402.718369,traditional,HOVER,0.007947999620228074,12.173913043478262,,50,1.0,rule:HOVER,False,True,,gradual_tilt
+1780436402.7183828,traditional,HOVER,0.007781000022077933,13.91304347826087,,50,1.0,rule:HOVER,False,True,,gradual_tilt
+1780436402.7184036,traditional,STABILIZE,0.014308001482277177,15.652173913043478,,75,1.0,rule:STABILIZE,False,True,,gradual_tilt
+1780436402.7184176,traditional,STABILIZE,0.008478999006911181,17.391304347826086,,75,1.0,rule:STABILIZE,False,True,,gradual_tilt
+1780436402.7184331,traditional,STABILIZE,0.00882399945112411,19.130434782608695,,75,1.0,rule:STABILIZE,False,True,,gradual_tilt
+1780436402.7184458,traditional,STABILIZE,0.007466000170097686,20.869565217391305,,75,1.0,rule:STABILIZE,False,True,,gradual_tilt
+1780436402.7184606,traditional,STABILIZE,0.008342998626176268,22.60869565217391,,75,1.0,rule:STABILIZE,False,True,,gradual_tilt
+1780436402.7184727,traditional,STABILIZE,0.006049998773960397,24.347826086956523,,75,1.0,rule:STABILIZE,False,True,,gradual_tilt
+1780436402.7184834,traditional,STABILIZE,0.006653999662376009,26.086956521739133,,75,1.0,rule:STABILIZE,False,True,,gradual_tilt
+1780436402.7184947,traditional,STABILIZE,0.006507998477900401,27.82608695652174,,75,1.0,rule:STABILIZE,False,True,,gradual_tilt
+1780436402.718505,traditional,STABILIZE,0.0057680008467286825,29.565217391304344,,75,1.0,rule:STABILIZE,False,True,,gradual_tilt
+1780436402.718517,traditional,STABILIZE,0.007988001016201451,31.304347826086957,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,gradual_tilt
+1780436402.718528,traditional,STABILIZE,0.006211999789229594,33.04347826086956,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,gradual_tilt
+1780436402.7185383,traditional,STABILIZE,0.005297999450704083,34.78260869565217,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,gradual_tilt
+1780436402.7185473,traditional,STABILIZE,0.004883000656263903,36.52173913043478,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,gradual_tilt
+1780436402.7185564,traditional,STABILIZE,0.005165999027667567,38.26086956521739,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,gradual_tilt
+1780436402.7185676,traditional,STABILIZE,0.007106000339263119,40.0,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,gradual_tilt
+1780436402.8777518,agentic,HOVER,159.0933600000426,0.0,NONE,50,0.88,Tilt 0.0° is within nominal limits; maintaining a balanced hover.,False,True,,gradual_tilt
+1780436403.0220695,agentic,HOVER,144.21895899977244,1.7391304347826086,NONE,50,0.88,Tilt 1.7° is within nominal limits; maintaining a balanced hover.,False,True,,gradual_tilt
+1780436403.1158495,agentic,HOVER,93.65732500009472,3.4782608695652173,NONE,50,0.88,Tilt 3.5° is within nominal limits; maintaining a balanced hover.,False,True,,gradual_tilt
+1780436403.1837022,agentic,HOVER,67.7616909997596,5.217391304347826,NONE,50,0.88,Tilt 5.2° is within nominal limits; maintaining a balanced hover.,False,True,,gradual_tilt
+1780436403.3636186,agentic,HOVER,179.82056400069268,6.956521739130435,NONE,50,0.88,Tilt 7.0° is within nominal limits; maintaining a balanced hover.,False,True,,gradual_tilt
+1780436403.4562993,agentic,HOVER,92.59083300094062,8.695652173913043,NONE,50,0.88,Tilt 8.7° is within nominal limits; maintaining a balanced hover.,False,True,,gradual_tilt
+1780436403.5156045,agentic,HOVER,59.209183000348276,10.434782608695652,NONE,50,0.88,Tilt 10.4° is within nominal limits; maintaining a balanced hover.,False,True,,gradual_tilt
+1780436403.5750337,agentic,HOVER,59.33775400080776,12.173913043478262,NONE,50,0.88,Tilt 12.2° is within nominal limits; maintaining a balanced hover.,False,True,,gradual_tilt
+1780436403.7395003,agentic,HOVER,164.37377699912759,13.91304347826087,NONE,50,0.88,Tilt 13.9° is within nominal limits; maintaining a balanced hover.,False,True,,gradual_tilt
+1780436403.8707783,agentic,STABILIZE,131.1624310001207,15.652173913043478,MEDIUM,75,0.82,Tilt 15.7° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,gradual_tilt
+1780436404.0340407,agentic,STABILIZE,163.1381049992342,17.391304347826086,MEDIUM,75,0.82,Tilt 17.4° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,gradual_tilt
+1780436404.1824481,agentic,STABILIZE,148.31118599977344,19.130434782608695,MEDIUM,75,0.82,Tilt 19.1° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,gradual_tilt
+1780436404.3043647,agentic,STABILIZE,121.81822499951522,20.869565217391305,MEDIUM,75,0.82,Tilt 20.9° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,gradual_tilt
+1780436404.486436,agentic,STABILIZE,181.97492599938414,22.60869565217391,MEDIUM,75,0.82,Tilt 22.6° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,gradual_tilt
+1780436404.5852528,agentic,STABILIZE,98.72560799885832,24.347826086956523,MEDIUM,75,0.82,Tilt 24.3° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,gradual_tilt
+1780436404.7087371,agentic,STABILIZE,123.39033299940638,26.086956521739133,MEDIUM,75,0.82,Tilt 26.1° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,gradual_tilt
+1780436404.8708599,agentic,STABILIZE,162.02177699960885,27.82608695652174,MEDIUM,75,0.82,Tilt 27.8° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,gradual_tilt
+1780436405.003073,agentic,STABILIZE,132.12123699850054,29.565217391304344,MEDIUM,75,0.82,Tilt 29.6° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,gradual_tilt
+1780436405.1702116,agentic,STABILIZE,167.01916599959077,31.304347826086957,HIGH,75,0.9,Tilt 31.3° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,gradual_tilt
+1780436405.2971835,agentic,STABILIZE,126.8708700008574,33.04347826086956,HIGH,75,0.9,Tilt 33.0° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,gradual_tilt
+1780436405.442945,agentic,STABILIZE,145.6536639998376,34.78260869565217,HIGH,75,0.9,Tilt 34.8° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,gradual_tilt
+1780436405.4963896,agentic,STABILIZE,53.30727500040666,36.52173913043478,HIGH,75,0.9,Tilt 36.5° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,gradual_tilt
+1780436405.5748956,agentic,STABILIZE,78.38624899886781,38.26086956521739,HIGH,75,0.9,Tilt 38.3° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,gradual_tilt
+1780436405.662576,agentic,STABILIZE,87.5660230012727,40.0,HIGH,75,0.9,Tilt 40.0° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,gradual_tilt
+1780436405.6626236,traditional,HOVER,0.0192340012290515,4.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.6626496,traditional,HOVER,0.013606000720756128,4.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.6626709,traditional,HOVER,0.011138001354993321,4.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.6626902,traditional,HOVER,0.010574000043561682,4.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.6627295,traditional,HOVER,0.013181001122575253,4.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.6627476,traditional,HOVER,0.009867999324342236,4.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.6627674,traditional,STABILIZE,0.01208300091093406,38.0,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,sudden_gust
+1780436405.6627858,traditional,STABILIZE,0.010644998837960884,38.0,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,sudden_gust
+1780436405.6628025,traditional,STABILIZE,0.009629000487620942,38.0,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,sudden_gust
+1780436405.6628203,traditional,STABILIZE,0.010249001206830144,38.0,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,sudden_gust
+1780436405.6628373,traditional,STABILIZE,0.009826000678003766,38.0,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,sudden_gust
+1780436405.662857,traditional,STABILIZE,0.013057999240118079,33.0,,100,1.0,rule:EMERGENCY_STABILIZE,False,True,,sudden_gust
+1780436405.6628726,traditional,STABILIZE,0.008977000106824562,28.0,,75,1.0,rule:STABILIZE,False,True,,sudden_gust
+1780436405.6628876,traditional,STABILIZE,0.00858999919728376,23.0,,75,1.0,rule:STABILIZE,False,True,,sudden_gust
+1780436405.662902,traditional,STABILIZE,0.008353999874088913,18.0,,75,1.0,rule:STABILIZE,False,True,,sudden_gust
+1780436405.6629174,traditional,HOVER,0.009049001164385118,13.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.6629353,traditional,HOVER,0.01137100116466172,8.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.6629515,traditional,HOVER,0.009129000318353064,4.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.6629663,traditional,HOVER,0.00855599864735268,4.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.662981,traditional,HOVER,0.008383998647332191,4.0,,50,1.0,rule:HOVER,False,True,,sudden_gust
+1780436405.7219296,agentic,HOVER,58.8461549996282,4.0,NONE,50,0.88,Tilt 4.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436405.8022406,agentic,HOVER,80.18240399906063,4.0,NONE,50,0.88,Tilt 4.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436405.8652072,agentic,HOVER,62.84337200122536,4.0,NONE,50,0.88,Tilt 4.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436405.951035,agentic,HOVER,85.71102800124208,4.0,NONE,50,0.88,Tilt 4.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436406.0862696,agentic,HOVER,135.1338210006361,4.0,NONE,50,0.88,Tilt 4.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436406.183985,agentic,HOVER,97.61576400160266,4.0,NONE,50,0.88,Tilt 4.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436406.2813652,agentic,STABILIZE,97.28919999906793,38.0,HIGH,75,0.9,Tilt 38.0° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,sudden_gust
+1780436406.3578727,agentic,STABILIZE,76.40490499943553,38.0,HIGH,75,0.9,Tilt 38.0° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,sudden_gust
+1780436406.4419024,agentic,STABILIZE,83.93545099897892,38.0,HIGH,75,0.9,Tilt 38.0° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,sudden_gust
+1780436406.6183445,agentic,STABILIZE,176.3545330013585,38.0,HIGH,75,0.9,Tilt 38.0° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,sudden_gust
+1780436406.7558832,agentic,STABILIZE,137.39333900048223,38.0,HIGH,75,0.9,Tilt 38.0° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,sudden_gust
+1780436406.8917713,agentic,STABILIZE,135.7620479993784,33.0,HIGH,75,0.9,Tilt 33.0° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,sudden_gust
+1780436406.9616385,agentic,STABILIZE,69.75757600048382,28.0,MEDIUM,75,0.82,Tilt 28.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sudden_gust
+1780436407.110696,agentic,STABILIZE,148.9493280005263,23.0,MEDIUM,75,0.82,Tilt 23.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sudden_gust
+1780436407.1805348,agentic,STABILIZE,69.73958299931837,18.0,MEDIUM,75,0.82,Tilt 18.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sudden_gust
+1780436407.2802625,agentic,HOVER,99.63797299860744,13.0,NONE,50,0.88,Tilt 13.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436407.464274,agentic,HOVER,183.86623800142843,8.0,NONE,50,0.88,Tilt 8.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436407.6000457,agentic,HOVER,135.67284700002347,4.0,NONE,50,0.88,Tilt 4.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436407.7240145,agentic,HOVER,123.84554599884723,4.0,NONE,50,0.88,Tilt 4.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436407.8656864,agentic,HOVER,141.5767529997538,4.0,NONE,50,0.88,Tilt 4.0° is within nominal limits; maintaining a balanced hover.,False,True,,sudden_gust
+1780436407.8657224,traditional,STABILIZE,0.014666999049950391,16.0,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8657398,traditional,STABILIZE,0.008820999937597662,22.71195754045884,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8657508,traditional,STABILIZE,0.005957999746897258,27.78059378731055,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8657615,traditional,STABILIZE,0.005728001269744709,29.964929812456763,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8657713,traditional,STABILIZE,0.005466999937198125,28.73016397555954,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.865781,traditional,STABILIZE,0.005529000191017985,24.378610017455394,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.865791,traditional,STABILIZE,0.005089999831398018,17.97568011283814,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8658,traditional,HOVER,0.00530299985257443,11.089034812345322,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.8658211,traditional,HOVER,0.016445999790448695,5.404765065689006,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.8658342,traditional,HOVER,0.00874599936651066,2.314578352688642,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.865846,traditional,HOVER,0.007513001037295908,2.575060154716061,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.8658574,traditional,HOVER,0.007378001100732945,6.122435442014513,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.8658683,traditional,HOVER,0.0064779997046571225,12.088183025215038,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.8658783,traditional,STABILIZE,0.006292999387369491,19.011679833229415,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8658874,traditional,STABILIZE,0.005654999768012203,25.19781238206305,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8658972,traditional,STABILIZE,0.006137001037131995,29.131999674846345,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8659072,traditional,STABILIZE,0.006481001037172973,29.851015452727346,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.86592,traditional,STABILIZE,0.00675899900670629,27.178819576728863,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8659294,traditional,STABILIZE,0.005763999070040882,21.769658793384593,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8659384,traditional,HOVER,0.005682999471900985,14.94788431353467,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.8659484,traditional,HOVER,0.006053998731658794,8.383704447548823,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.865957,traditional,HOVER,0.005449001037050039,3.68425936039662,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.8659658,traditional,HOVER,0.005471998520079069,2.0001371082901507,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.8659751,traditional,HOVER,0.005825999323860742,3.7436695543620004,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.8659835,traditional,HOVER,0.005373000021791086,8.487979147993912,,50,1.0,rule:HOVER,False,True,,oscillation
+1780436407.8659925,traditional,STABILIZE,0.005460999091155827,15.071493437083191,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8660018,traditional,STABILIZE,0.005922000127611682,21.88233851557297,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8660235,traditional,STABILIZE,0.006547999873873778,27.252981971722694,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8660345,traditional,STABILIZE,0.007185000868048519,29.868502979728184,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436407.8660471,traditional,STABILIZE,0.008528000762453303,29.08853077734556,,75,1.0,rule:STABILIZE,False,True,,oscillation
+1780436408.0303986,agentic,STABILIZE,164.2506650005089,16.0,MEDIUM,75,0.82,Tilt 16.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436408.1862473,agentic,STABILIZE,155.6843159996788,22.71195754045884,MEDIUM,75,0.82,Tilt 22.7° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436408.2652187,agentic,STABILIZE,78.8524139989022,27.78059378731055,MEDIUM,75,0.82,Tilt 27.8° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436408.3177874,agentic,STABILIZE,52.41055599981337,29.964929812456763,HIGH,75,0.9,Tilt 30.0° is at/above the 30° danger threshold; equalising motors to recover attitude.,False,True,,oscillation
+1780436408.4095166,agentic,STABILIZE,91.59904199987068,28.73016397555954,MEDIUM,75,0.82,Tilt 28.7° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436408.493433,agentic,STABILIZE,83.8058480003383,24.378610017455394,MEDIUM,75,0.82,Tilt 24.4° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436408.5698507,agentic,STABILIZE,76.30356099980418,17.97568011283814,MEDIUM,75,0.82,Tilt 18.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436408.7482982,agentic,HOVER,178.33561099905637,11.089034812345322,NONE,50,0.88,Tilt 11.1° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436408.9167895,agentic,HOVER,168.3913359993312,5.404765065689006,NONE,50,0.88,Tilt 5.4° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436409.007308,agentic,HOVER,90.40572400044766,2.314578352688642,NONE,50,0.88,Tilt 2.3° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436409.1453936,agentic,HOVER,137.97196699852066,2.575060154716061,NONE,50,0.88,Tilt 2.6° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436409.2464232,agentic,HOVER,100.92398699998739,6.122435442014513,NONE,50,0.88,Tilt 6.1° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436409.4205937,agentic,HOVER,174.07020900100179,12.088183025215038,NONE,50,0.88,Tilt 12.1° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436409.5304792,agentic,STABILIZE,109.78321500078891,19.011679833229415,MEDIUM,75,0.82,Tilt 19.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436409.6143684,agentic,STABILIZE,83.73679000033007,25.19781238206305,MEDIUM,75,0.82,Tilt 25.2° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436409.6993737,agentic,STABILIZE,84.86064200042165,29.131999674846345,MEDIUM,75,0.82,Tilt 29.1° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436409.8245382,agentic,STABILIZE,125.05039899951953,29.851015452727346,MEDIUM,75,0.82,Tilt 29.9° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436409.906982,agentic,STABILIZE,82.33453100001498,27.178819576728863,MEDIUM,75,0.82,Tilt 27.2° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436410.0345886,agentic,STABILIZE,127.50955699993938,21.769658793384593,MEDIUM,75,0.82,Tilt 21.8° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436410.2065654,agentic,HOVER,171.86818499976653,14.94788431353467,NONE,50,0.88,Tilt 14.9° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436410.3085675,agentic,HOVER,101.89088200058904,8.383704447548823,NONE,50,0.88,Tilt 8.4° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436410.3863266,agentic,HOVER,77.64808200045081,3.68425936039662,NONE,50,0.88,Tilt 3.7° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436410.5719504,agentic,HOVER,185.51837500126567,2.0001371082901507,NONE,50,0.88,Tilt 2.0° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436410.689581,agentic,HOVER,117.5182089991722,3.7436695543620004,NONE,50,0.88,Tilt 3.7° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436410.8268235,agentic,HOVER,137.12762499926612,8.487979147993912,NONE,50,0.88,Tilt 8.5° is within nominal limits; maintaining a balanced hover.,False,True,,oscillation
+1780436410.8791404,agentic,STABILIZE,52.20001999987289,15.071493437083191,MEDIUM,75,0.82,Tilt 15.1° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436410.9406836,agentic,STABILIZE,61.43553299989435,21.88233851557297,MEDIUM,75,0.82,Tilt 21.9° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436411.0760052,agentic,STABILIZE,135.20393299950229,27.252981971722694,MEDIUM,75,0.82,Tilt 27.3° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436411.2324955,agentic,STABILIZE,156.38405400022748,29.868502979728184,MEDIUM,75,0.82,Tilt 29.9° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436411.337529,agentic,STABILIZE,104.93191299974569,29.08853077734556,MEDIUM,75,0.82,Tilt 29.1° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,oscillation
+1780436411.3375645,traditional,HOVER,0.01684199924056884,10.0,,50,1.0,rule:HOVER,False,True,,sensor_dropout
+1780436411.3375819,traditional,HOVER,0.009341998520540074,14.0,,50,1.0,rule:HOVER,False,True,,sensor_dropout
+1780436411.337596,traditional,STABILIZE,0.009153000064543448,18.0,,75,1.0,rule:STABILIZE,False,True,,sensor_dropout
+1780436411.3376083,traditional,STABILIZE,0.007922000804683194,22.0,,75,1.0,rule:STABILIZE,False,True,,sensor_dropout
+1780436411.3376184,traditional,HOLD,0.005914000212214887,,,,1.0,rule:NO_DATA,False,True,,sensor_dropout
+1780436411.3376267,traditional,HOLD,0.004298999556340277,,,,1.0,rule:NO_DATA,False,True,,sensor_dropout
+1780436411.3376386,traditional,HOVER,0.007635000656591728,14.0,,50,1.0,rule:HOVER,False,True,,sensor_dropout
+1780436411.3376489,traditional,STABILIZE,0.006628000846831128,18.0,,75,1.0,rule:STABILIZE,False,True,,sensor_dropout
+1780436411.337661,traditional,STABILIZE,0.0076739997894037515,22.0,,75,1.0,rule:STABILIZE,False,True,,sensor_dropout
+1780436411.3376718,traditional,STABILIZE,0.006813999789301306,26.0,,75,1.0,rule:STABILIZE,False,True,,sensor_dropout
+1780436411.3376813,traditional,HOVER,0.006157000825623982,10.0,,50,1.0,rule:HOVER,False,True,,sensor_dropout
+1780436411.3376887,traditional,HOLD,0.0036530000215861946,,,,1.0,rule:NO_DATA,False,True,,sensor_dropout
+1780436411.3376975,traditional,STABILIZE,0.005775998943136074,18.0,,75,1.0,rule:STABILIZE,False,True,,sensor_dropout
+1780436411.3377073,traditional,STABILIZE,0.006443999154726043,22.0,,75,1.0,rule:STABILIZE,False,True,,sensor_dropout
+1780436411.3377175,traditional,STABILIZE,0.00650200126983691,26.0,,75,1.0,rule:STABILIZE,False,True,,sensor_dropout
+1780436411.3377268,traditional,HOVER,0.005848998625879176,10.0,,50,1.0,rule:HOVER,False,True,,sensor_dropout
+1780436411.337736,traditional,HOVER,0.005857000360265374,14.0,,50,1.0,rule:HOVER,False,True,,sensor_dropout
+1780436411.3377466,traditional,STABILIZE,0.007116999768186361,18.0,,75,1.0,rule:STABILIZE,False,True,,sensor_dropout
+1780436411.39207,agentic,HOVER,54.22883599931083,10.0,NONE,50,0.88,Tilt 10.0° is within nominal limits; maintaining a balanced hover.,False,True,,sensor_dropout
+1780436411.4907427,agentic,HOVER,98.56312699957925,14.0,NONE,50,0.88,Tilt 14.0° is within nominal limits; maintaining a balanced hover.,False,True,,sensor_dropout
+1780436411.6756616,agentic,STABILIZE,184.82894900080282,18.0,MEDIUM,75,0.82,Tilt 18.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sensor_dropout
+1780436411.795164,agentic,STABILIZE,119.40750800022215,22.0,MEDIUM,75,0.82,Tilt 22.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sensor_dropout
+1780436411.976915,agentic,HOVER,181.65596200014988,0.0,NONE,50,0.88,Tilt 0.0° is within nominal limits; maintaining a balanced hover.,False,True,,sensor_dropout
+1780436412.1437993,agentic,HOVER,166.77968699877965,0.0,NONE,50,0.88,Tilt 0.0° is within nominal limits; maintaining a balanced hover.,False,True,,sensor_dropout
+1780436412.1911283,agentic,HOVER,47.18544400020619,14.0,NONE,50,0.88,Tilt 14.0° is within nominal limits; maintaining a balanced hover.,False,True,,sensor_dropout
+1780436412.3382359,agentic,STABILIZE,146.98932800092734,18.0,MEDIUM,75,0.82,Tilt 18.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sensor_dropout
+1780436412.4801636,agentic,STABILIZE,141.82072799849266,22.0,MEDIUM,75,0.82,Tilt 22.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sensor_dropout
+1780436412.601207,agentic,STABILIZE,120.92775199926109,26.0,MEDIUM,75,0.82,Tilt 26.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sensor_dropout
+1780436412.6846802,agentic,HOVER,83.36221699937596,10.0,NONE,50,0.88,Tilt 10.0° is within nominal limits; maintaining a balanced hover.,False,True,,sensor_dropout
+1780436412.8202908,agentic,HOVER,135.5129340008716,0.0,NONE,50,0.88,Tilt 0.0° is within nominal limits; maintaining a balanced hover.,False,True,,sensor_dropout
+1780436412.8813274,agentic,STABILIZE,60.942389000047115,18.0,MEDIUM,75,0.82,Tilt 18.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sensor_dropout
+1780436412.9874973,agentic,STABILIZE,106.0699689987814,22.0,MEDIUM,75,0.82,Tilt 22.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sensor_dropout
+1780436413.097375,agentic,STABILIZE,109.77558800004772,26.0,MEDIUM,75,0.82,Tilt 26.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sensor_dropout
+1780436413.2771492,agentic,HOVER,179.6379560000787,10.0,NONE,50,0.88,Tilt 10.0° is within nominal limits; maintaining a balanced hover.,False,True,,sensor_dropout
+1780436413.4458854,agentic,HOVER,168.62673799914774,14.0,NONE,50,0.88,Tilt 14.0° is within nominal limits; maintaining a balanced hover.,False,True,,sensor_dropout
+1780436413.528862,agentic,STABILIZE,82.86562200009939,18.0,MEDIUM,75,0.82,Tilt 18.0° exceeds the 15° warning threshold; applying corrective stabilisation.,False,True,,sensor_dropout

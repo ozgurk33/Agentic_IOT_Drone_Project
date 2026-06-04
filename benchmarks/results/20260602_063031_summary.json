@@ -1,0 +1,127 @@
+{
+  "meta": {
+    "timestamp": "2026-06-02T06:30:31",
+    "model": "mock-vision-controller",
+    "using_ollama": false,
+    "vision": true,
+    "repeat": 1,
+    "scenarios": [
+      "gradual_tilt",
+      "sudden_gust"
+    ],
+    "total_steps": 88
+  },
+  "overall": {
+    "total": 88,
+    "by_mode": {
+      "traditional": {
+        "count": 44,
+        "latency_ms": {
+          "avg": 0.0,
+          "min": 0.0,
+          "max": 0.01,
+          "p50": 0.0,
+          "p95": 0.01
+        },
+        "actions": {
+          "HOVER": 20,
+          "STABILIZE": 24
+        },
+        "errors": 0,
+        "avg_confidence": 1.0
+      },
+      "agentic": {
+        "count": 44,
+        "latency_ms": {
+          "avg": 111.75,
+          "min": 46.39,
+          "max": 180.3,
+          "p50": 120.64,
+          "p95": 169.61
+        },
+        "actions": {
+          "HOVER": 20,
+          "STABILIZE": 24
+        },
+        "errors": 0,
+        "avg_confidence": 0.869
+      }
+    }
+  },
+  "per_scenario": {
+    "gradual_tilt": {
+      "total": 48,
+      "by_mode": {
+        "traditional": {
+          "count": 24,
+          "latency_ms": {
+            "avg": 0.0,
+            "min": 0.0,
+            "max": 0.01,
+            "p50": 0.0,
+            "p95": 0.01
+          },
+          "actions": {
+            "HOVER": 9,
+            "STABILIZE": 15
+          },
+          "errors": 0,
+          "avg_confidence": 1.0
+        },
+        "agentic": {
+          "count": 24,
+          "latency_ms": {
+            "avg": 102.65,
+            "min": 46.39,
+            "max": 170.32,
+            "p50": 98.92,
+            "p95": 158.62
+          },
+          "actions": {
+            "HOVER": 9,
+            "STABILIZE": 15
+          },
+          "errors": 0,
+          "avg_confidence": 0.862
+        }
+      }
+    },
+    "sudden_gust": {
+      "total": 40,
+      "by_mode": {
+        "traditional": {
+          "count": 20,
+          "latency_ms": {
+            "avg": 0.01,
+            "min": 0.0,
+            "max": 0.01,
+            "p50": 0.0,
+            "p95": 0.01
+          },
+          "actions": {
+            "HOVER": 11,
+            "STABILIZE": 9
+          },
+          "errors": 0,
+          "avg_confidence": 1.0
+        },
+        "agentic": {
+          "count": 20,
+          "latency_ms": {
+            "avg": 122.67,
+            "min": 51.62,
+            "max": 180.3,
+            "p50": 127.56,
+            "p95": 179.25
+          },
+          "actions": {
+            "HOVER": 11,
+            "STABILIZE": 9
+          },
+          "errors": 0,
+          "avg_confidence": 0.877
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+ts,mode,action,latency_ms,tilt_deg,hazard_level,motor_speed,confidence,reasoning,used_vision,ok,error,scenario
+1780371103.0982811,traditional,HOVER,0.010308001947123557,0.0,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0982928,traditional,HOVER,0.005160000000614673,0.6543893935923044,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0982995,traditional,HOVER,0.003073997504543513,1.236739606139474,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.098304,traditional,HOVER,0.0024370019673369825,1.682941969615793,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983088,traditional,HOVER,0.002239001332782209,1.9438758027266254,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983126,traditional,HOVER,0.002073000359814614,1.9908159155035299,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.098317,traditional,HOVER,0.0021379964891821146,1.8185948536513634,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983315,traditional,HOVER,0.009570998372510076,1.446171763476649,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983405,traditional,HOVER,0.004182998964097351,0.914545253271624,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983462,traditional,HOVER,0.0029000002541579306,0.2822400161197344,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983505,traditional,HOVER,0.00236400228459388,0.38113592575097077,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983546,traditional,HOVER,0.0021890009520575404,1.0025540971766895,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983582,traditional,HOVER,0.0020040024537593126,1.5136049906158564,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983615,traditional,HOVER,0.0018169957911595702,1.8580290025415238,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983648,traditional,HOVER,0.0018170030671171844,1.9979098341958565,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.098368,traditional,HOVER,0.0017929996829479933,1.917848549326277,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983727,traditional,HOVER,0.002810003934428096,1.62665878313516,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.098377,traditional,HOVER,0.002373999450355768,1.1563964834886178,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.098381,traditional,HOVER,0.0022169988369569182,0.5588309963978517,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.0983844,traditional,HOVER,0.001815998984966427,0.10025401976434545,,50,1.0,rule:HOVER,False,True,,stable_hover
+1780371103.2357945,agentic,HOVER,137.34283200028585,0.0,NONE,50,0.88,Tilt 0.0° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371103.2859776,agentic,HOVER,50.073582999175414,0.6543893935923044,NONE,50,0.88,Tilt 0.7° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371103.3712423,agentic,HOVER,85.15737800189527,1.236739606139474,NONE,50,0.88,Tilt 1.2° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371103.448939,agentic,HOVER,77.58362300228328,1.682941969615793,NONE,50,0.88,Tilt 1.7° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371103.5993385,agentic,HOVER,150.29190999484854,1.9438758027266254,NONE,50,0.88,Tilt 1.9° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371103.7408283,agentic,HOVER,141.37557699723402,1.9908159155035299,NONE,50,0.88,Tilt 2.0° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371103.91321,agentic,HOVER,172.2382160005509,1.8185948536513634,NONE,50,0.88,Tilt 1.8° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371103.9723735,agentic,HOVER,59.03885299630929,1.446171763476649,NONE,50,0.88,Tilt 1.4° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371104.0770953,agentic,HOVER,104.62327099958202,0.914545253271624,NONE,50,0.88,Tilt 0.9° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371104.128349,agentic,HOVER,51.14401899481891,0.2822400161197344,NONE,50,0.88,Tilt 0.3° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371104.2062352,agentic,HOVER,77.77502800308866,0.38113592575097077,NONE,50,0.88,Tilt 0.4° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371104.3237786,agentic,HOVER,117.4455090003903,1.0025540971766895,NONE,50,0.88,Tilt 1.0° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371104.3735678,agentic,HOVER,49.69056600384647,1.5136049906158564,NONE,50,0.88,Tilt 1.5° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371104.4486837,agentic,HOVER,75.01027599937515,1.8580290025415238,NONE,50,0.88,Tilt 1.9° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371104.5863519,agentic,HOVER,137.56621799984714,1.9979098341958565,NONE,50,0.88,Tilt 2.0° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371104.709613,agentic,HOVER,123.1533460013452,1.917848549326277,NONE,50,0.88,Tilt 1.9° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371104.7865171,agentic,HOVER,76.80850400356576,1.62665878313516,NONE,50,0.88,Tilt 1.6° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371104.914783,agentic,HOVER,128.18308099667775,1.1563964834886178,NONE,50,0.88,Tilt 1.2° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371105.0734854,agentic,HOVER,158.61125200171955,0.5588309963978517,NONE,50,0.88,Tilt 0.6° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover
+1780371105.120831,agentic,HOVER,47.257917998649646,0.10025401976434545,NONE,50,0.88,Tilt 0.1° is within nominal limits; maintaining a balanced hover.,False,True,,stable_hover

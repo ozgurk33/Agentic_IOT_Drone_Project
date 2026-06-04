@@ -1,0 +1,44 @@
+[project]
+name = "drone-mcp-project"
+version = "0.1.0"
+description = "Smartphone as Autonomous Drone Simulation — Rule-Based vs Agentic AI"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]>=1.0.0",
+    "fastmcp>=3.0.0",
+    "pydantic-ai>=1.0.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "websockets>=12.0",
+    "opencv-python>=4.10.0",
+    "numpy>=1.26.0",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27.0",
+    "pillow>=10.4.0",
+    "pydantic-settings>=2.4.0",
+]
+
+[project.scripts]
+drone-server = "backend.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "playwright>=1.60.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]

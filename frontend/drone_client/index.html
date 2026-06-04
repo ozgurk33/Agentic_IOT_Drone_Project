@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Drone İstemcisi</title>
+    <style>
+        /* ── Reset & tokens ─────────────────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #0d1117;
+            --surface:  #161b22;
+            --border:   #30363d;
+            --text:     #c9d1d9;
+            --dim:      #8b949e;
+            --green:    #3fb950;
+            --red:      #f85149;
+            --blue:     #58a6ff;
+            --yellow:   #e3b341;
+            --purple:   #bc8cff;
+            --teal:     #79c0ff;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            min-height: 100svh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ── Header ─────────────────────────────────────────────────────────── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+        }
+
+        .logo { font-size: 1rem; font-weight: bold; color: var(--blue); letter-spacing: 1px; }
+
+        .status-pill {
+            display: flex; align-items: center; gap: 7px;
+            padding: 4px 11px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: bold;
+            border: 1px solid var(--border); background: var(--bg);
+            transition: border-color .3s;
+        }
+        .status-pill.connected { border-color: var(--green); }
+
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--red);
+            animation: blink-red 1.4s infinite;
+        }
+        .status-dot.connected { background: var(--green); animation: blink-green 2s infinite; }
+
+        @keyframes blink-red   { 0%,100%{opacity:1} 50%{opacity:.3} }
+        @keyframes blink-green { 0%,100%{opacity:1} 50%{opacity:.6} }
+
+        /* ── Main ───────────────────────────────────────────────────────────── */
+        main {
+            flex: 1; padding: 12px;
+            display: flex; flex-direction: column; gap: 10px;
+            max-width: 480px; margin: 0 auto; width: 100%;
+            padding-bottom: 24px;
+        }
+
+        /* ── Card base ──────────────────────────────────────────────────────── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 9px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.7rem; color: var(--dim);
+            text-transform: uppercase; letter-spacing: .5px;
+        }
+
+        .badge {
+            font-size: 0.68rem; padding: 2px 9px;
+            border-radius: 10px;
+            background: var(--bg); border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .badge.ok    { border-color: var(--green); color: var(--green); }
+        .badge.warn  { border-color: var(--yellow); color: var(--yellow); }
+        .badge.err   { border-color: var(--red); color: var(--red); }
+
+        /* ── Config panel ───────────────────────────────────────────────────── */
+        .config-body { padding: 12px; }
+
+        label.field-label {
+            display: block; font-size: 0.68rem; color: var(--dim);
+            margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px;
+        }
+
+        .input-row { display: flex; gap: 8px; }
+
+        input[type="text"] {
+            flex: 1; background: var(--bg);
+            border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text); font-family: 'Courier New', monospace;
+            font-size: 0.82rem; padding: 8px 10px; outline: none;
+            transition: border-color .2s;
+        }
+        input[type="text"]:focus { border-color: var(--blue); }
+
+        /* ── Buttons ────────────────────────────────────────────────────────── */
+        .btn {
+            padding: 8px 14px; border-radius: 6px; border: none;
+            cursor: pointer; font-family: 'Courier New', monospace;
+            font-size: 0.78rem; font-weight: bold; letter-spacing: .5px;
+            transition: filter .15s, transform .1s; white-space: nowrap;
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn:disabled { opacity: .38; cursor: not-allowed; }
+
+        .btn-blue    { background: var(--blue);   color: #0d1117; }
+        .btn-green   { background: var(--green);  color: #0d1117; }
+        .btn-red     { background: var(--red);    color: #fff; }
+        .btn-muted   { background: var(--bg);     color: var(--dim); border: 1px solid var(--border); }
+        .btn-yellow  { background: var(--yellow); color: #0d1117; }
+
+        .controls-row { display: flex; gap: 8px; }
+        .controls-row .btn { flex: 1; text-align: center; }
+
+        /* ── iOS permission banner ──────────────────────────────────────────── */
+        #iosPerm {
+            display: none;
+            background: var(--surface); border: 1px solid var(--yellow);
+            border-radius: 10px; padding: 14px;
+        }
+        #iosPerm.visible { display: block; }
+        #iosPerm p { font-size: 0.78rem; color: var(--yellow); margin-bottom: 10px; line-height: 1.5; }
+
+        /* ── Camera ─────────────────────────────────────────────────────────── */
+        .cam-wrap {
+            position: relative; background: #000;
+            aspect-ratio: 4/3; overflow: hidden;
+        }
+
+        video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        canvas { display: none; }  /* off-screen capture canvas */
+
+        .cam-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,.65);
+            font-size: 0.85rem; color: var(--dim);
+            pointer-events: none; transition: opacity .3s;
+        }
+        .cam-overlay.hidden { opacity: 0; pointer-events: none; }
+
+        /* Corner brackets */
+        .bracket {
+            position: absolute; width: 22px; height: 22px;
+            border-color: var(--blue); border-style: solid; opacity: .55;
+        }
+        .tl { top:7px;  left:7px;  border-width: 2px 0 0 2px; }
+        .tr { top:7px;  right:7px; border-width: 2px 2px 0 0; }
+        .bl { bottom:7px; left:7px;  border-width: 0 0 2px 2px; }
+        .br { bottom:7px; right:7px; border-width: 0 2px 2px 0; }
+
+        .fps-tag {
+            position: absolute; top: 8px; right: 10px;
+            font-size: 0.68rem; color: var(--green);
+            background: rgba(0,0,0,.55); padding: 2px 7px; border-radius: 4px;
+        }
+
+        /* Streaming animation on the badge */
+        @keyframes stream-pulse {
+            0%,100% { opacity: 1; } 50% { opacity: .4; }
+        }
+        .streaming-anim { animation: stream-pulse .9s infinite; }
+
+        /* ── Telemetry grid ─────────────────────────────────────────────────── */
+        .tele-grid {
+            display: grid; grid-template-columns: repeat(3,1fr);
+            gap: 1px; background: var(--border);
+        }
+
+        .tele-cell {
+            background: var(--surface);
+            padding: 10px 6px; text-align: center;
+        }
+
+        .tele-lbl {
+            font-size: 0.62rem; color: var(--dim);
+            text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px;
+        }
+
+        .tele-val {
+            font-size: 1.05rem; font-weight: bold;
+            font-variant-numeric: tabular-nums;
+            transition: color .2s;
+        }
+
+        .v-ax    { color: var(--red); }
+        .v-ay    { color: var(--green); }
+        .v-az    { color: var(--blue); }
+        .v-alpha { color: var(--purple); }
+        .v-beta  { color: var(--yellow); }
+        .v-gamma { color: var(--teal); }
+
+        /* ── Stats row ──────────────────────────────────────────────────────── */
+        .stats-row { display: flex; gap: 8px; }
+        .stat-box {
+            flex: 1; background: var(--surface);
+            border: 1px solid var(--border); border-radius: 8px;
+            padding: 9px; text-align: center;
+        }
+        .stat-lbl { font-size: 0.62rem; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+        .stat-val { font-size: 1.1rem; font-weight: bold; color: var(--blue); }
+
+        /* ── Log panel ──────────────────────────────────────────────────────── */
+        .log-body {
+            padding: 8px 12px; max-height: 110px; overflow-y: auto;
+            font-size: 0.68rem; color: var(--dim); line-height: 1.65;
+        }
+        .log-body .ok   { color: var(--green); }
+        .log-body .warn { color: var(--yellow); }
+        .log-body .err  { color: var(--red); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        /* ══════════════ MODERN POLISH (phone client) ══════════════ */
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background:
+                radial-gradient(600px 400px at 90% -10%, rgba(88,166,255,.12), transparent 60%),
+                radial-gradient(500px 360px at -10% 110%, rgba(63,185,80,.10), transparent 55%);
+        }
+        header {
+            position: relative;
+            background: linear-gradient(180deg, #161b22, #12161d);
+        }
+        header::after {
+            content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+            background: linear-gradient(90deg, var(--blue), var(--green), var(--purple), var(--blue));
+            background-size: 300% 100%; animation: accent-slide 6s linear infinite;
+        }
+        @keyframes accent-slide { to { background-position: 300% 0; } }
+
+        .card {
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            transition: border-color .3s, box-shadow .3s;
+        }
+        .btn { transition: filter .15s, transform .1s, box-shadow .2s; }
+        .btn-green:not(:disabled)  { box-shadow: 0 0 14px rgba(63,185,80,.35); }
+        .btn-red:not(:disabled)    { box-shadow: 0 0 14px rgba(248,81,73,.35); }
+        .btn-blue:not(:disabled)   { box-shadow: 0 0 14px rgba(88,166,255,.35); }
+
+        /* Connection success pulse ring on the status pill */
+        .status-pill.connected {
+            animation: pill-pop .5s ease;
+            box-shadow: 0 0 0 0 rgba(63,185,80,.5);
+        }
+        @keyframes pill-pop {
+            0%   { box-shadow: 0 0 0 0 rgba(63,185,80,.55); }
+            70%  { box-shadow: 0 0 0 12px rgba(63,185,80,0); }
+            100% { box-shadow: 0 0 0 0 rgba(63,185,80,0); }
+        }
+
+        /* Streaming glow on camera while live */
+        .cam-wrap.live { box-shadow: inset 0 0 0 2px rgba(63,185,80,.5); }
+
+        /* Big tilt number gets a soft glow that tracks danger color (set inline) */
+        #v-tilt { text-shadow: 0 0 12px currentColor; transition: color .25s, text-shadow .25s; }
+
+        /* Toast for the phone */
+        #pToast {
+            position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(120%);
+            background: rgba(22,27,34,.95); border: 1px solid var(--border);
+            border-left: 3px solid var(--green); border-radius: 10px;
+            padding: 10px 16px; font-size: .8rem; color: var(--text);
+            box-shadow: 0 10px 30px rgba(0,0,0,.5); z-index: 500;
+            opacity: 0; transition: transform .35s cubic-bezier(.2,.9,.3,1.2), opacity .35s;
+            max-width: 90vw; text-align: center;
+        }
+        #pToast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div id="pToast"></div>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+    <span class="logo">&#x1F681; DRONE CLIENT</span>
+    <div class="status-pill" id="statusPill">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusTxt">Bağlı Değil</span>
+    </div>
+</header>
+
+<main>
+
+    <!-- Server URL config -->
+    <div class="card">
+        <div class="card-header">
+            <span>Sunucu Bağlantısı</span>
+            <span class="badge" id="wsBadge">Kapalı</span>
+        </div>
+        <div class="config-body">
+            <label class="field-label">WebSocket Adresi</label>
+            <div class="input-row">
+                <input type="text" id="wsUrl"
+                    placeholder="ws://192.168.x.x:8000/ws/drone"
+                    autocomplete="off" autocorrect="off"
+                    autocapitalize="none" spellcheck="false">
+                <button class="btn btn-blue" id="connectBtn" onclick="toggleConnect()">Bağlan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS sensor permission banner -->
+    <div id="iosPerm">
+        <p>&#x26A0;&#xFE0F; iOS'ta hareket sensörü için kullanıcı izni gereklidir. Devam etmek için aşağıdaki butona dokunun.</p>
+        <button class="btn btn-yellow" onclick="requestIOSPerm()">Sensör İzni Ver</button>
+    </div>
+
+    <!-- Camera -->
+    <div class="card">
+        <div class="card-header">
+            <span>Kamera Görüntüsü</span>
+            <span class="badge" id="camBadge">Kapalı</span>
+        </div>
+        <div class="cam-wrap">
+            <video id="video" autoplay playsinline muted></video>
+            <canvas id="captureCanvas"></canvas>
+            <div class="cam-overlay" id="camOverlay">Kamera başlatılmamış</div>
+            <div class="bracket tl"></div>
+            <div class="bracket tr"></div>
+            <div class="bracket bl"></div>
+            <div class="bracket br"></div>
+            <div class="fps-tag" id="fpsTag">-- FPS</div>
+        </div>
+    </div>
+
+    <!-- Camera & stream controls -->
+    <div class="controls-row">
+        <button class="btn btn-green" id="camBtn" onclick="toggleCamera()">Kamerayı Aç</button>
+        <button class="btn btn-muted" id="streamBtn" onclick="toggleStream()" disabled>Yayın Başlat</button>
+        <button class="btn btn-muted" id="flipBtn" onclick="flipCamera()" disabled>Döndür</button>
+    </div>
+
+    <!-- Telemetry -->
+    <div class="card">
+        <div class="card-header">
+            <span>İvme Ölçer &amp; Yönelim</span>
+            <span class="badge" id="sensorBadge">Bekliyor</span>
+        </div>
+        <!-- Edge-computed tilt angle — the single number the flight logic reacts to -->
+        <div id="tiltBanner" style="display:flex;align-items:baseline;justify-content:space-between;
+            gap:.6rem;margin:0 0 .7rem;padding:.7rem 1rem;border-radius:12px;
+            background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.35);transition:all .2s">
+            <span style="font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;opacity:.8">Eğim Açısı</span>
+            <span><b id="v-tilt" style="font-size:1.7rem;font-variant-numeric:tabular-nums">--</b><span style="opacity:.6">°</span></span>
+            <span id="tiltStatus" style="font-size:.78rem;font-weight:600;opacity:.9">DENGEDE</span>
+        </div>
+        <div class="tele-grid">
+            <div class="tele-cell"><div class="tele-lbl">Ax (m/s²)</div><div class="tele-val v-ax"  id="v-ax">--</div></div>
+            <div class="tele-cell"><div class="tele-lbl">Ay (m/s²)</div><div class="tele-val v-ay"  id="v-ay">--</div></div>
+            <div class="tele-cell"><div class="tele-lbl">Az (m/s²)</div><div class="tele-val v-az"  id="v-az">--</div></div>
+            <div class="tele-cell"><div class="tele-lbl">α Yaw (°)</div><div class="tele-val v-alpha" id="v-alpha">--</div></div>
+            <div class="tele-cell"><div class="tele-lbl">β Pitch (°)</div><div class="tele-val v-beta"  id="v-beta">--</div></div>
+            <div class="tele-cell"><div class="tele-lbl">γ Roll (°)</div><div class="tele-val v-gamma" id="v-gamma">--</div></div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="stat-lbl">Gönderilen</div>
+            <div class="stat-val" id="statSent">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-lbl">Düşürülen</div>
+            <div class="stat-val" id="statDrop">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-lbl">Kare Boyutu</div>
+            <div class="stat-val" id="statSize">-- KB</div>
+        </div>
+    </div>
+
+    <!-- Log -->
+    <div class="card">
+        <div class="card-header">
+            <span>Sistem Logu</span>
+            <span class="badge" id="logCount">0</span>
+        </div>
+        <div class="log-body" id="logBody"></div>
+    </div>
+
+</main>
+
+<script>
+"use strict";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+const CAPTURE_FPS       = 10;          // target frame rate sent to server
+const CAPTURE_W         = 1280;
+const CAPTURE_H         = 720;
+const JPEG_QUALITY      = 0.80;        // higher quality for AI analysis
+const TELEMETRY_HZ      = 20;          // sensor JSON messages per second
+const PING_INTERVAL_MS  = 5000;
+const MAX_RECONNECT_DELAY_MS = 10000;
+const MAX_LOG_ENTRIES   = 60;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mutable state
+// ─────────────────────────────────────────────────────────────────────────────
+const S = {
+    // WebSocket
+    ws:               null,
+    wsConnected:      false,
+    reconnectTries:   0,
+    reconnectTimer:   null,
+    pingTimer:        null,
+
+    // Camera / streaming
+    mediaStream:      null,
+    cameraActive:     false,
+    streaming:        false,
+    facingMode:       'environment',   // back camera default
+    captureTimer:     null,
+    telemetryTimer:   null,
+
+    // Backpressure flag — true while a frame blob is being serialised/sent
+    isSendingFrame:   false,
+
+    // Sensors
+    accel:  { ax: 0, ay: 0, az: 0 },
+    orient: { alpha: 0, beta: 0, gamma: 0 },
+
+    // Stats
+    framesSent:   0,
+    framesDropped: 0,
+    fpsCount:     0,
+    fpsStamp:     performance.now(),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Logging
+// ─────────────────────────────────────────────────────────────────────────────
+function log(msg, level = 'ok') {
+    const body = document.getElementById('logBody');
+    const ts   = new Date().toLocaleTimeString('tr-TR', { hour12: false });
+    const el   = document.createElement('div');
+    el.className = level;
+    el.textContent = `[${ts}] ${msg}`;
+    body.appendChild(el);
+    while (body.children.length > MAX_LOG_ENTRIES) body.removeChild(body.firstChild);
+    body.scrollTop = body.scrollHeight;
+    document.getElementById('logCount').textContent = body.children.length;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Default URL — infer from page origin so "open /drone on your PC → share IP"
+// works automatically.
+// ─────────────────────────────────────────────────────────────────────────────
+(function setDefaultUrl() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const host  = location.hostname || 'localhost';
+    const port  = location.port || '8000';
+    document.getElementById('wsUrl').value = `${proto}://${host}:${port}/ws/drone`;
+})();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WebSocket
+// ─────────────────────────────────────────────────────────────────────────────
+function toggleConnect() {
+    if (S.wsConnected || S.ws) { manualDisconnect(); } else { connect(); }
+}
+
+function connect() {
+    const url = document.getElementById('wsUrl').value.trim();
+    if (!url) { log('URL alanı boş!', 'err'); return; }
+
+    log(`Bağlanılıyor → ${url}`);
+    try {
+        S.ws = new WebSocket(url);
+        S.ws.binaryType = 'arraybuffer';
+    } catch (e) {
+        log(`WebSocket oluşturulamadı: ${e.message}`, 'err');
+        return;
+    }
+
+    S.ws.onopen = () => {
+        S.wsConnected = true;
+        S.reconnectTries = 0;
+        setWsStatus(true);
+        log('Bağlantı kuruldu ✓', 'ok');
+        pToast('✓ Sunucuya bağlandı', 'var(--green)');
+
+        // Keepalive pings
+        S.pingTimer = setInterval(() => {
+            if (S.ws && S.ws.readyState === WebSocket.OPEN)
+                S.ws.send(JSON.stringify({ type: 'ping' }));
+        }, PING_INTERVAL_MS);
+
+        // Enable stream button only if camera is also ready
+        document.getElementById('streamBtn').disabled = !S.cameraActive;
+    };
+
+    S.ws.onclose = (ev) => {
+        S.wsConnected = false;
+        S.isSendingFrame = false;
+        setWsStatus(false);
+        clearInterval(S.pingTimer);
+        log(`Bağlantı kapandı (code ${ev.code})`, 'warn');
+
+        if (S.streaming) {
+            // Auto-reconnect with capped exponential backoff
+            S.reconnectTries++;
+            const delay = Math.min(800 * Math.pow(1.6, S.reconnectTries), MAX_RECONNECT_DELAY_MS);
+            log(`Yeniden bağlanılıyor… ${(delay / 1000).toFixed(1)}s sonra`, 'warn');
+            S.reconnectTimer = setTimeout(connect, delay);
+        }
+    };
+
+    S.ws.onerror = () => log('WebSocket hatası', 'err');
+
+    S.ws.onmessage = (ev) => {
+        try {
+            const msg = JSON.parse(ev.data);
+            if (msg.type === 'pong') { /* keepalive confirmed */ }
+        } catch (_) {}
+    };
+}
+
+function manualDisconnect() {
+    S.streaming = false;
+    clearInterval(S.captureTimer);
+    clearInterval(S.telemetryTimer);
+    clearTimeout(S.reconnectTimer);
+    clearInterval(S.pingTimer);
+    if (S.ws) { S.ws.close(1000, 'user-disconnect'); S.ws = null; }
+    updateStreamBtn();
+    log('Bağlantı kesildi (manuel)', 'warn');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Camera
+// ─────────────────────────────────────────────────────────────────────────────
+async function toggleCamera() {
+    if (S.cameraActive) { stopCamera(); } else { await startCamera(); }
+}
+
+async function startCamera() {
+    try {
+        if (S.mediaStream) S.mediaStream.getTracks().forEach(t => t.stop());
+
+        const constraints = {
+            video: {
+                facingMode: S.facingMode,
+                width:  { ideal: CAPTURE_W },
+                height: { ideal: CAPTURE_H },
+                frameRate: { ideal: CAPTURE_FPS, max: 30 },
+            },
+            audio: false,
+        };
+
+        S.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        const video = document.getElementById('video');
+        video.srcObject = S.mediaStream;
+        await video.play().catch(() => {});   // autoplay policy guard
+
+        S.cameraActive = true;
+        document.getElementById('camOverlay').classList.add('hidden');
+        document.getElementById('camBadge').textContent =
+            S.facingMode === 'environment' ? 'Arka Kamera' : 'Ön Kamera';
+        document.getElementById('camBadge').className = 'badge ok';
+        document.getElementById('camBtn').textContent = 'Kamerayı Kapat';
+        document.getElementById('camBtn').className   = 'btn btn-red';
+        document.getElementById('flipBtn').disabled   = false;
+        document.getElementById('streamBtn').disabled = !S.wsConnected;
+
+        log(`Kamera açıldı (${S.facingMode})`, 'ok');
+    } catch (err) {
+        log(`Kamera hatası: ${err.message}`, 'err');
+    }
+}
+
+function stopCamera() {
+    if (S.streaming) stopStream();
+    if (S.mediaStream) {
+        S.mediaStream.getTracks().forEach(t => t.stop());
+        S.mediaStream = null;
+    }
+    S.cameraActive = false;
+    document.getElementById('video').srcObject = null;
+    document.getElementById('camOverlay').classList.remove('hidden');
+    document.getElementById('camBadge').textContent = 'Kapalı';
+    document.getElementById('camBadge').className   = 'badge';
+    document.getElementById('camBtn').textContent   = 'Kamerayı Aç';
+    document.getElementById('camBtn').className     = 'btn btn-green';
+    document.getElementById('flipBtn').disabled     = true;
+    document.getElementById('streamBtn').disabled   = true;
+    log('Kamera kapatıldı', 'warn');
+}
+
+async function flipCamera() {
+    S.facingMode = S.facingMode === 'environment' ? 'user' : 'environment';
+    log(`Kamera yönü değiştirildi → ${S.facingMode}`, 'ok');
+    if (S.cameraActive) await startCamera();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Frame Streaming  — backpressure via isSendingFrame flag
+//
+// Pattern:
+//   Every tick: if isSendingFrame=true → drop this tick (frame skipped).
+//   Otherwise:  set isSendingFrame=true, capture canvas, toBlob, send binary.
+//   On send complete (or error): isSendingFrame=false → next tick can proceed.
+//
+//   This means the LLM on the server always receives the LATEST frame,
+//   never an old frame that piled up in a JavaScript microtask queue.
+// ─────────────────────────────────────────────────────────────────────────────
+function toggleStream() {
+    if (S.streaming) { stopStream(); } else { startStream(); }
+}
+
+function startStream() {
+    if (!S.cameraActive || !S.wsConnected) return;
+
+    S.streaming = true;
+    updateStreamBtn();
+    log('Frame yayını başladı', 'ok');
+    pToast('📡 Canlı yayın başladı', 'var(--green)');
+    document.querySelector('.cam-wrap')?.classList.add('live');
+
+    const canvas = document.getElementById('captureCanvas');
+    const ctx    = canvas.getContext('2d');
+    canvas.width  = CAPTURE_W;
+    canvas.height = CAPTURE_H;
+    const video   = document.getElementById('video');
+
+    S.captureTimer = setInterval(() => {
+        if (!S.wsConnected || !S.streaming) return;
+
+        // ── Backpressure guard ─────────────────────────────────────────────
+        if (S.isSendingFrame) {
+            S.framesDropped++;
+            document.getElementById('statDrop').textContent = S.framesDropped;
+            return;
+        }
+        if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+
+        // ── Capture & send ─────────────────────────────────────────────────
+        S.isSendingFrame = true;
+        ctx.drawImage(video, 0, 0, CAPTURE_W, CAPTURE_H);
+
+        canvas.toBlob(
+            (blob) => {
+                if (!blob || !S.wsConnected || S.ws.readyState !== WebSocket.OPEN) {
+                    S.isSendingFrame = false;
+                    return;
+                }
+                blob.arrayBuffer()
+                    .then((buf) => {
+                        S.ws.send(buf);
+
+                        S.framesSent++;
+                        document.getElementById('statSent').textContent = S.framesSent;
+                        document.getElementById('statSize').textContent =
+                            (buf.byteLength / 1024).toFixed(1) + ' KB';
+
+                        // Rolling FPS
+                        S.fpsCount++;
+                        const now     = performance.now();
+                        const elapsed = now - S.fpsStamp;
+                        if (elapsed >= 1000) {
+                            const fps = Math.round(S.fpsCount * 1000 / elapsed);
+                            document.getElementById('fpsTag').textContent = `${fps} FPS`;
+                            S.fpsCount = 0;
+                            S.fpsStamp = now;
+                        }
+                    })
+                    .catch((e) => log(`ArrayBuffer hatası: ${e.message}`, 'err'))
+                    .finally(() => { S.isSendingFrame = false; });
+            },
+            'image/jpeg',
+            JPEG_QUALITY,
+        );
+    }, 1000 / CAPTURE_FPS);
+
+    // Telemetry loop runs independently at its own rate
+    S.telemetryTimer = setInterval(() => {
+        if (!S.wsConnected || S.ws.readyState !== WebSocket.OPEN) return;
+        const pkt = {
+            type:  'telemetry',
+            ax:    round2(S.accel.ax),
+            ay:    round2(S.accel.ay),
+            az:    round2(S.accel.az),
+            alpha: round2(S.orient.alpha),
+            beta:  round2(S.orient.beta),
+            gamma: round2(S.orient.gamma),
+            // Edge-computed tilt: worst-axis angle the rule engine & agent act on.
+            tilt:  round2(Math.max(Math.abs(S.orient.beta), Math.abs(S.orient.gamma))),
+            ts:    Date.now() / 1000,
+        };
+        try { S.ws.send(JSON.stringify(pkt)); } catch (_) {}
+    }, 1000 / TELEMETRY_HZ);
+}
+
+function stopStream() {
+    S.streaming = false;
+    clearInterval(S.captureTimer);
+    clearInterval(S.telemetryTimer);
+    S.isSendingFrame = false;
+    updateStreamBtn();
+    log('Frame yayını durduruldu', 'warn');
+    document.querySelector('.cam-wrap')?.classList.remove('live');
+}
+
+function updateStreamBtn() {
+    const btn = document.getElementById('streamBtn');
+    btn.textContent  = S.streaming ? 'Yayını Durdur' : 'Yayın Başlat';
+    btn.className    = S.streaming ? 'btn btn-red' : 'btn btn-muted';
+    btn.disabled     = !(S.cameraActive && S.wsConnected);
+
+    // Animate the camera badge while actively streaming
+    const camBadge = document.getElementById('camBadge');
+    if (S.streaming) {
+        camBadge.textContent = 'YAYIN';
+        camBadge.className   = 'badge ok streaming-anim';
+    } else if (S.cameraActive) {
+        camBadge.textContent = S.facingMode === 'environment' ? 'Arka Kamera' : 'Ön Kamera';
+        camBadge.className   = 'badge ok';
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sensors — DeviceMotion + DeviceOrientation
+// ─────────────────────────────────────────────────────────────────────────────
+function initSensors() {
+    // Orientation (Euler angles) — available everywhere without permission
+    if (typeof DeviceOrientationEvent !== 'undefined') {
+        window.addEventListener('deviceorientation', onOrientation, true);
+    } else {
+        log('DeviceOrientationEvent desteklenmiyor', 'warn');
+    }
+
+    // Acceleration — needs permission on iOS 13+
+    if (typeof DeviceMotionEvent !== 'undefined') {
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            document.getElementById('iosPerm').classList.add('visible');
+        } else {
+            attachMotionListener();
+        }
+    } else {
+        log('DeviceMotionEvent desteklenmiyor — simülasyon modu', 'warn');
+        startSimulatedSensors();   // desktop fallback
+    }
+}
+
+function onOrientation(ev) {
+    S.orient.alpha = ev.alpha ?? 0;
+    S.orient.beta  = ev.beta  ?? 0;
+    S.orient.gamma = ev.gamma ?? 0;
+    refreshTelemetryUI();
+}
+
+function attachMotionListener() {
+    window.addEventListener('devicemotion', (ev) => {
+        const a = ev.accelerationIncludingGravity;
+        if (a) {
+            S.accel.ax = a.x ?? 0;
+            S.accel.ay = a.y ?? 0;
+            S.accel.az = a.z ?? 0;
+        }
+        refreshTelemetryUI();
+        document.getElementById('sensorBadge').textContent = 'Aktif';
+        document.getElementById('sensorBadge').className   = 'badge ok';
+    }, true);
+    log('Hareket sensörü dinleyicisi eklendi', 'ok');
+}
+
+async function requestIOSPerm() {
+    try {
+        const result = await DeviceMotionEvent.requestPermission();
+        if (result === 'granted') {
+            attachMotionListener();
+            document.getElementById('iosPerm').classList.remove('visible');
+            log('iOS sensör izni verildi ✓', 'ok');
+        } else {
+            log('iOS sensör izni reddedildi', 'err');
+        }
+    } catch (e) {
+        log(`iOS izin hatası: ${e.message}`, 'err');
+    }
+}
+
+// Desktop fallback: gentle sine-wave simulation so the dashboard isn't empty
+function startSimulatedSensors() {
+    let t = 0;
+    document.getElementById('sensorBadge').textContent = 'Simülasyon';
+    document.getElementById('sensorBadge').className   = 'badge warn';
+    setInterval(() => {
+        t += 0.05;
+        S.accel.ax = round2(Math.sin(t) * 2.5);
+        S.accel.ay = round2(Math.cos(t * 0.7) * 1.8);
+        S.accel.az = round2(9.8 + Math.sin(t * 0.3) * 0.4);
+        S.orient.alpha = round2((t * 15) % 360);
+        S.orient.beta  = round2(Math.sin(t * 0.4) * 20);
+        S.orient.gamma = round2(Math.cos(t * 0.6) * 15);
+        refreshTelemetryUI();
+    }, 50);
+    log('Sensör simülasyonu başlatıldı (masaüstü modu)', 'warn');
+}
+
+function refreshTelemetryUI() {
+    document.getElementById('v-ax').textContent    = S.accel.ax.toFixed(2);
+    document.getElementById('v-ay').textContent    = S.accel.ay.toFixed(2);
+    document.getElementById('v-az').textContent    = S.accel.az.toFixed(2);
+    document.getElementById('v-alpha').textContent = S.orient.alpha.toFixed(1);
+    document.getElementById('v-beta').textContent  = S.orient.beta.toFixed(1);
+    document.getElementById('v-gamma').textContent = S.orient.gamma.toFixed(1);
+
+    // Edge-computed tilt = worst-axis angle; color-code against the rule thresholds
+    // (15° uyarı, 30° tehlike) so the demo audience can read the decision at a glance.
+    const tilt = Math.max(Math.abs(S.orient.beta), Math.abs(S.orient.gamma));
+    document.getElementById('v-tilt').textContent = tilt.toFixed(1);
+    const banner = document.getElementById('tiltBanner');
+    const status = document.getElementById('tiltStatus');
+    let col, label;
+    if (tilt >= 30)      { col = '248,81,73';  label = 'TEHLİKE → STABILIZE'; }
+    else if (tilt >= 15) { col = '210,153,34'; label = 'UYARI → düzelt';      }
+    else                 { col = '63,185,80';  label = 'DENGEDE';             }
+    banner.style.background  = `rgba(${col},.12)`;
+    banner.style.borderColor = `rgba(${col},.45)`;
+    document.getElementById('v-tilt').style.color = `rgb(${col})`;
+    status.style.color = `rgb(${col})`;
+    status.textContent = label;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function setWsStatus(connected) {
+    document.getElementById('statusDot').classList.toggle('connected', connected);
+    document.getElementById('statusTxt').textContent  = connected ? 'Bağlı' : 'Bağlı Değil';
+    document.getElementById('statusPill').classList.toggle('connected', connected);
+    document.getElementById('wsBadge').textContent    = connected ? 'Açık' : 'Kapalı';
+    document.getElementById('wsBadge').className      = connected ? 'badge ok' : 'badge';
+    document.getElementById('connectBtn').textContent = connected ? 'Kes' : 'Bağlan';
+    document.getElementById('connectBtn').className   = connected ? 'btn btn-red' : 'btn btn-blue';
+    if (S.cameraActive)
+        document.getElementById('streamBtn').disabled = !connected;
+}
+
+function round2(n) { return Math.round(n * 100) / 100; }
+
+// Phone toast — brief centered message at the bottom
+let _pToastTimer = null;
+function pToast(msg, color = 'var(--green)') {
+    const el = document.getElementById('pToast');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.borderLeftColor = color;
+    el.classList.add('show');
+    clearTimeout(_pToastTimer);
+    _pToastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Boot
+// ─────────────────────────────────────────────────────────────────────────────
+initSensors();
+log('Drone istemcisi yüklendi. Sunucu adresini girin ve "Bağlan"a basın.', 'ok');
+</script>
+</body>
+</html>

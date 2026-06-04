@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akıllı Telefon Tabanlı Otonom Drone Simülasyonu — Jüri Sunumu</title>
+<style>
+  :root{
+    --bg:#0a0e17; --bg2:#0d1320; --panel:#121a2b; --panel2:#16203a;
+    --ink:#e6edf6; --muted:#8aa0c0; --line:#22304d;
+    --accent:#4f8cff; --accent2:#22d3a6; --warn:#f5a623; --danger:#ff5c6c;
+    --grad:linear-gradient(135deg,#4f8cff 0%,#22d3a6 100%);
+    --shadow:0 18px 50px rgba(0,0,0,.55);
+    --mono:'SFMono-Regular',ui-monospace,'JetBrains Mono','Cascadia Code',Consolas,monospace;
+    --sans:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(79,140,255,.13), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(34,211,166,.12), transparent 55%),
+      var(--bg);
+    color:var(--ink); font-family:var(--sans); overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── Deck / slides ─────────────────────────────────────────────── */
+  .deck{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  .slide{
+    position:absolute;inset:0;display:none;flex-direction:column;
+    padding:5.2vh 7vw 8vh; opacity:0; transform:translateY(24px) scale(.99);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .slide.active{display:flex;opacity:1;transform:none;animation:fade .55s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(26px) scale(.985)}to{opacity:1;transform:none}}
+
+  .kicker{
+    font-family:var(--mono);font-size:.82rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--accent2);margin-bottom:1.1rem;display:flex;align-items:center;gap:.6rem;
+  }
+  .kicker::before{content:"";width:34px;height:2px;background:var(--grad);border-radius:2px}
+  h1{font-size:clamp(2.1rem,5vw,4rem);line-height:1.04;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(1.7rem,3.6vw,2.9rem);font-weight:800;letter-spacing:-.015em;line-height:1.08}
+  h3{font-size:1.15rem;font-weight:700;color:var(--ink)}
+  p,li{color:var(--muted);font-size:clamp(1rem,1.4vw,1.18rem);line-height:1.6}
+  .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .mono{font-family:var(--mono);font-size:.86em;color:var(--accent)}
+  .lead{max-width:60ch;margin-top:1.2rem}
+
+  /* ── Title slide ───────────────────────────────────────────────── */
+  .title-wrap{display:flex;flex-direction:column;justify-content:center;height:100%}
+  .badge{
+    display:inline-flex;align-items:center;gap:.55rem;align-self:flex-start;
+    padding:.45rem .9rem;border:1px solid var(--line);border-radius:999px;
+    background:rgba(79,140,255,.08);font-family:var(--mono);font-size:.78rem;color:var(--accent);
+    margin-bottom:1.8rem;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);box-shadow:0 0 12px var(--accent2)}
+  .title-meta{display:flex;gap:2.4rem;margin-top:2.6rem;flex-wrap:wrap}
+  .title-meta div{font-size:.95rem}
+  .title-meta b{display:block;color:var(--ink);font-size:1.05rem;margin-bottom:.15rem}
+
+  /* ── Layout helpers ────────────────────────────────────────────── */
+  .body{margin-top:2.2rem;flex:1;min-height:0;display:flex;flex-direction:column;gap:1.4rem}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:1.6rem;flex:1;min-height:0}
+  .cols-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem}
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--bg2));
+    border:1px solid var(--line);border-radius:18px;padding:1.5rem 1.6rem;
+    box-shadow:var(--shadow);position:relative;overflow:hidden;
+  }
+  .card::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--grad);opacity:.85}
+  .card h3{margin-bottom:.55rem;display:flex;align-items:center;gap:.6rem}
+  .card .ico{font-size:1.3rem}
+  .card p,.card li{font-size:1rem}
+  .card ul{margin:.4rem 0 0 1.1rem}
+  .card li{margin:.3rem 0}
+
+  .pill{display:inline-block;padding:.28rem .7rem;border-radius:999px;font-family:var(--mono);
+    font-size:.78rem;border:1px solid var(--line);color:var(--muted);background:rgba(255,255,255,.02)}
+  .pill.blue{color:var(--accent);border-color:rgba(79,140,255,.4)}
+  .pill.green{color:var(--accent2);border-color:rgba(34,211,166,.4)}
+  .pill.warn{color:var(--warn);border-color:rgba(245,166,35,.4)}
+  .pill.danger{color:var(--danger);border-color:rgba(255,92,108,.4)}
+
+  .feature{display:flex;gap:1rem;align-items:flex-start;margin:.5rem 0}
+  .feature .n{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    background:rgba(79,140,255,.12);border:1px solid var(--line);font-family:var(--mono);
+    color:var(--accent);font-weight:700}
+  .feature h3{font-size:1.05rem}
+  .feature p{font-size:.97rem;margin-top:.15rem}
+
+  /* ── Code / mono blocks ────────────────────────────────────────── */
+  pre{background:#070b13;border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.3rem;
+    font-family:var(--mono);font-size:.92rem;line-height:1.55;color:#cdd9ec;overflow:auto}
+  .c-key{color:#ff7b9c}.c-str{color:#7ee787}.c-num{color:#79c0ff}.c-com{color:#5a6b86;font-style:italic}
+  .c-fn{color:#d2a8ff}.c-ty{color:#22d3a6}
+
+  /* ── Tables ────────────────────────────────────────────────────── */
+  table{width:100%;border-collapse:collapse;font-size:1rem}
+  th,td{padding:.7rem .9rem;text-align:left;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  td b{color:var(--ink)}
+  tr td:first-child{color:var(--ink);font-weight:600}
+  .vs-trad{color:var(--accent)}.vs-agent{color:var(--accent2)}.vs-hybrid{color:var(--warn)}
+
+  /* ── Bars ──────────────────────────────────────────────────────── */
+  .bar{height:14px;border-radius:8px;background:rgba(255,255,255,.06);overflow:hidden;position:relative}
+  .bar span{position:absolute;inset:0;border-radius:8px}
+  .bar .b-trad{background:linear-gradient(90deg,#4f8cff,#6aa3ff)}
+  .bar .b-agent{background:linear-gradient(90deg,#22d3a6,#3be6bd)}
+  .bar .b-hybrid{background:linear-gradient(90deg,#f5a623,#ffc05c)}
+
+  /* ── SVG diagram frame ─────────────────────────────────────────── */
+  .diagram{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,rgba(18,26,43,.6),rgba(10,14,23,.3));
+    border:1px solid var(--line);border-radius:18px;padding:1.2rem;box-shadow:var(--shadow)}
+  .diagram svg{width:100%;height:100%;max-height:62vh}
+  .lbl{font-family:var(--sans);font-weight:700;font-size:14px;fill:var(--ink)}
+  .sub{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+  .flow{stroke:var(--accent);stroke-width:2.2;fill:none;marker-end:url(#arrow)}
+  .flow.alt{stroke:var(--accent2);marker-end:url(#arrow2)}
+  .flow.dash{stroke-dasharray:6 5}
+
+  /* ── Footer / chrome ───────────────────────────────────────────── */
+  .chrome{position:fixed;left:0;right:0;bottom:0;height:46px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 1.4rem;font-family:var(--mono);font-size:.76rem;
+    color:var(--muted);z-index:20}
+  .chrome .brand{display:flex;align-items:center;gap:.5rem}
+  .progress{position:fixed;top:0;left:0;height:3px;background:var(--grad);z-index:30;
+    width:0;transition:width .4s ease;box-shadow:0 0 14px rgba(79,140,255,.6)}
+  .nav{display:flex;gap:.4rem;align-items:center}
+  .nav button{background:var(--panel);border:1px solid var(--line);color:var(--ink);
+    width:32px;height:30px;border-radius:9px;cursor:pointer;font-size:1rem;transition:.2s}
+  .nav button:hover{border-color:var(--accent);color:var(--accent)}
+  .counter{min-width:54px;text-align:center}
+  .hint{position:fixed;bottom:54px;right:18px;font-family:var(--mono);font-size:.72rem;color:var(--line);z-index:20}
+
+  .two-list{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 2rem}
+  .check{display:flex;gap:.6rem;align-items:flex-start;margin:.45rem 0;font-size:1rem;color:var(--muted)}
+  .check::before{content:"▸";color:var(--accent2);font-weight:700}
+
+  .stat{display:flex;flex-direction:column;gap:.2rem}
+  .stat .v{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:800;color:var(--ink);font-family:var(--mono)}
+  .stat .k{font-size:.85rem;color:var(--muted)}
+
+  @media(max-width:820px){
+    .cols,.cols-3,.two-list{grid-template-columns:1fr}
+    .slide{padding:5vh 6vw 9vh}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 ─ TITLE ───────────────────────────────────────────────── -->
+  <section class="slide active">
+    <div class="title-wrap">
+      <span class="badge"><span class="dot"></span> Bitirme / Jüri Sunumu · 2026 · Agentic AI – IoT Entegrasyonu</span>
+      <h1>Akıllı Telefonun <span class="grad">Otonom Drone</span>'a Dönüşümü</h1>
+      <p class="lead" style="font-size:1.25rem">
+        Bir IoT uç düğümünün (akıllı telefon sensörleri) gerçek zamanlı telemetrisini,
+        Kural Tabanlı Otomasyon ile Agentik Yapay Zekânın <b style="color:var(--ink)">uçta (edge)</b>
+        işlediği bir uçuş kontrol senaryosunda karşılaştırıyoruz.
+        Tamamen <b style="color:var(--ink)">yerel</b> çalışır — bulut LLM API'si yoktur.
+      </p>
+      <div class="title-meta">
+        <div><b>Geliştiriciler</b><span style="color:var(--muted)">Özgür & Yiğit</span></div>
+        <div><b>Konu</b><span style="color:var(--muted)">Agentic AI – IoT Entegrasyonu</span></div>
+        <div><b>Mimari</b><span style="color:var(--muted)">IoT Telefon · WebSocket · MCP · Pydantic-AI · Ollama</span></div>
+        <div><b>Yaklaşım</b><span style="color:var(--muted)">Rule-Based vs Agentic AI (Edge)</span></div>
+      </div>
+      <!-- Video link placeholder -->
+      <div style="margin-top:2rem">
+        <p style="font-family:var(--mono);font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;margin-bottom:.6rem">▶ Sunum Video Kaydı</p>
+        <div style="display:inline-flex;align-items:center;gap:.9rem;padding:.7rem 1.4rem;
+          border:1px dashed rgba(79,140,255,.4);border-radius:12px;background:rgba(79,140,255,.05);
+          font-family:var(--mono);font-size:.85rem;color:rgba(79,140,255,.55);cursor:pointer"
+          title="Video bağlantısını buraya yapıştırın">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.7">
+            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          <span id="videoLink">[ Video bağlantısını buraya ekleyin ]</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 ─ PROBLEM ─────────────────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Problem &amp; Motivasyon</div>
+    <h2>Bir drone "beyni" <span class="grad">nasıl</span> karar vermeli?</h2>
+    <div class="body">
+      <div class="cols">
+        <div class="card">
+          <h3><span class="ico">📐</span> Klasik Yaklaşım — Kural Tabanlı</h3>
+          <p>Eğim eşiği aşılırsa motoru artır, değilse sabit kal. Hızlı ve öngörülebilir;
+             ama yalnızca mühendisin önceden yazdığı senaryoları bilir.</p>
+          <ul>
+            <li>IF / THEN merdiveni</li>
+            <li>Mikrosaniyeler içinde karar</li>
+            <li>Bağlamı (kamera görüntüsünü) <b>anlamaz</b></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><span class="ico">🧠</span> Yeni Yaklaşım — Agentik YZ</h3>
+          <p>Aynı sensör verisini bir görüntü-dil modeline veririz; model durumu yorumlayıp
+             araç (tool) çağırarak karar verir.</p>
+          <ul>
+            <li>Kamerayı + IMU'yu birlikte değerlendirir</li>
+            <li>Açıklanabilir gerekçe üretir</li>
+            <li>Yavaş, ama esnek ve bağlam-farkında</li>
+          </ul>
+        </div>
+      </div>
+      <div class="cols-3" style="flex:none">
+        <div class="card" style="padding:1rem 1.2rem">
+          <h3 style="font-size:1rem"><span class="ico">🔗</span> N×M Entegrasyon Çıkmazı</h3>
+          <p style="font-size:.9rem">N sensör × M eylem → sonsuz özel kural gerekir. MCP bu karmaşıklığı <b style="color:var(--ink)">evrensel araç arayüzüne</b> indirger.</p>
+        </div>
+        <div class="card" style="padding:1rem 1.2rem">
+          <h3 style="font-size:1rem"><span class="ico">🔒</span> Yerel Veri Gizliliği</h3>
+          <p style="font-size:.9rem">Kamera görüntüsü ve IMU verisi makineyi hiç terk etmez — bulut bağımlılığı sıfır.</p>
+        </div>
+        <div class="card" style="padding:1rem 1.2rem">
+          <h3 style="font-size:1rem"><span class="ico">⚠️</span> IF/THEN Yetersizliği</h3>
+          <p style="font-size:.9rem">Kural motoru dinamik engeller, ışık koşulları veya karmaşık senaryolar için <b style="color:var(--ink)">kör</b> kalır.</p>
+        </div>
+      </div>
+      <p class="lead"><b style="color:var(--ink)">Araştırma sorusu:</b>
+        Aynı donanım ve aynı görevde bu iki paradigma hız, güvenilirlik ve
+        açıklanabilirlik açısından nasıl ayrışır?</p>
+    </div>
+  </section>
+
+  <!-- 3 ─ CONCEPT: phone = drone ──────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Temel Fikir</div>
+    <h2>Telefon = Drone gövdesi &nbsp;·&nbsp; PC = YZ beyni</h2>
+    <div class="body">
+      <div class="diagram">
+        <svg viewBox="0 0 980 420" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto">
+              <path d="M0 0 L11 5.5 L0 11 z" fill="#4f8cff"/></marker>
+            <marker id="arrow2" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto">
+              <path d="M0 0 L11 5.5 L0 11 z" fill="#22d3a6"/></marker>
+            <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#16203a"/><stop offset="1" stop-color="#0d1320"/></linearGradient>
+          </defs>
+
+          <!-- phone -->
+          <rect x="40" y="120" width="170" height="180" rx="20" fill="url(#g1)" stroke="#22304d"/>
+          <rect x="60" y="140" width="130" height="110" rx="8" fill="#0a0e17" stroke="#22304d"/>
+          <text x="125" y="200" text-anchor="middle" class="lbl" style="font-size:26px">📷</text>
+          <text x="125" y="278" text-anchor="middle" class="lbl">Akıllı Telefon</text>
+          <text x="125" y="296" text-anchor="middle" class="sub">Kamera · İvmeölçer</text>
+
+          <!-- pc -->
+          <rect x="760" y="100" width="190" height="220" rx="20" fill="url(#g1)" stroke="#22304d"/>
+          <text x="855" y="175" text-anchor="middle" class="lbl" style="font-size:30px">🧠</text>
+          <text x="855" y="225" text-anchor="middle" class="lbl">Kubuntu PC</text>
+          <text x="855" y="244" text-anchor="middle" class="sub">FastAPI · MCP</text>
+          <text x="855" y="262" text-anchor="middle" class="sub">Ollama (yerel LLM)</text>
+
+          <!-- center hub -->
+          <rect x="400" y="150" width="190" height="120" rx="16" fill="#101a30" stroke="#4f8cff"/>
+          <text x="495" y="200" text-anchor="middle" class="lbl">WebSocket Hub</text>
+          <text x="495" y="222" text-anchor="middle" class="sub">çift yönlü akış</text>
+          <text x="495" y="240" text-anchor="middle" class="sub">port 8000</text>
+
+          <!-- flows -->
+          <path class="flow" d="M212 185 H398"/>
+          <text x="305" y="172" text-anchor="middle" class="sub" style="fill:#4f8cff">JPEG + telemetri →</text>
+          <path class="flow alt dash" d="M398 240 H212" />
+          <text x="305" y="262" text-anchor="middle" class="sub" style="fill:#22d3a6">← durum / komut</text>
+
+          <path class="flow" d="M592 195 H758"/>
+          <text x="675" y="182" text-anchor="middle" class="sub" style="fill:#4f8cff">en güncel kare →</text>
+          <path class="flow alt dash" d="M758 250 H592"/>
+          <text x="675" y="272" text-anchor="middle" class="sub" style="fill:#22d3a6">← motor komutları</text>
+        </svg>
+      </div>
+      <div class="cols-3">
+        <div class="card"><h3><span class="ico">📲</span> Sanal Gövde</h3><p>Telefon tarayıcısı kamerayı ve ivmeölçeri okur, WebSocket üzerinden yayınlar.</p></div>
+        <div class="card"><h3><span class="ico">🔁</span> Tek Olay Döngüsü</h3><p>FastAPI tüm akışı tek asyncio döngüsünde yönetir — kilit gerektirmez.</p></div>
+        <div class="card"><h3><span class="ico">🛡️</span> %100 Yerel</h3><p>Veri makineden çıkmaz; gizlilik ve bağımsızlık jüri için kritik.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3.5 ─ IoT INTEGRATION LAYER ─────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Agentic AI – IoT Entegrasyonu</div>
+    <h2>Projenin <span class="grad">IoT mimarisindeki</span> yeri</h2>
+    <div class="body">
+      <p class="lead">Bu proje, klasik bir IoT zincirini (algıla → ilet → karar ver → eyle)
+        baştan sona kurar; farkı, karar katmanını <b style="color:var(--ink)">uçta çalışan agentik bir yapay zekâ</b> ile değiştirmesidir.</p>
+      <div class="cols-3">
+        <div class="card">
+          <h3><span class="ico">📡</span> Algıla — IoT Uç Düğümü</h3>
+          <p>Akıllı telefon; kamera, ivmeölçer ve jiroskop taşıyan bir sensör düğümüdür.
+             Eğim açısı gibi türev veriyi <b style="color:var(--ink)">uçta (edge)</b> hesaplar.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">🔌</span> İlet — Telemetri Taşıma</h3>
+          <p>WebSocket, sensör akışını düşük gecikmeyle ve çift yönlü taşır.
+             Geri basınç: en güncel kare hep önceliklidir (<span class="mono">maxsize=1</span>).</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">🧩</span> Soyutla — MCP Katmanı</h3>
+          <p>FastMCP; sensörleri <span class="mono">@resource</span>, eyleyicileri
+             <span class="mono">@tool</span> olarak sarar. N×M cihaz-model karmaşası N+M'e iner.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">🧠</span> Karar Ver — Edge AI</h3>
+          <p>Ollama + Pydantic-AI çıkarımı tamamen makinede yapar.
+             Bulut yok, internet bağımlılığı yok, veri uçtan çıkmaz.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">⚙️</span> Eyle — Sanal Eyleyiciler</h3>
+          <p>Ajan, motor hızı ve yön araçlarını özerk çağırır.
+             Algılama-eyleme döngüsü kapanır — gerçek bir uçuş kontrolcüsü gibi.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">🩺</span> Dayanıklılık</h3>
+          <p>Sensör veya model çökerse sistem güvenli kural moduna düşer;
+             hata açıklanabilir log'a yazılır, döngü çökmez.</p>
+        </div>
+      </div>
+      <p class="lead"><b style="color:var(--ink)">Sonuç:</b> Sıradan bir IoT sistemi veriyi buluta gönderir;
+        bizimki kararı uçta, agentik bir ajanla verir — daha özel, daha bağımsız, daha esnek.</p>
+    </div>
+  </section>
+
+  <!-- 4 ─ ARCHITECTURE (big) ──────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Sistem Mimarisi</div>
+    <h2>Uçtan uca <span class="grad">veri yolu</span></h2>
+    <div class="body">
+      <div class="diagram">
+        <svg viewBox="0 0 1040 470" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#16203a"/><stop offset="1" stop-color="#0c111d"/></linearGradient>
+          </defs>
+          <!-- layer bands -->
+          <text x="20" y="40" class="sub" style="fill:#4f8cff">CİHAZ</text>
+          <text x="20" y="170" class="sub" style="fill:#22d3a6">SUNUCU (FastAPI)</text>
+          <text x="20" y="330" class="sub" style="fill:#f5a623">KARAR KATMANI</text>
+
+          <!-- phone -->
+          <rect x="60" y="55" width="170" height="80" rx="14" fill="url(#gp)" stroke="#22304d"/>
+          <text x="145" y="90" text-anchor="middle" class="lbl">📱 Drone İstemcisi</text>
+          <text x="145" y="112" text-anchor="middle" class="sub">/drone · getUserMedia · DeviceMotion</text>
+
+          <!-- dashboard -->
+          <rect x="810" y="55" width="180" height="80" rx="14" fill="url(#gp)" stroke="#22304d"/>
+          <text x="900" y="90" text-anchor="middle" class="lbl">🖥️ Kontrol Paneli</text>
+          <text x="900" y="112" text-anchor="middle" class="sub">/ · canlı durum · mod seçimi</text>
+
+          <!-- server hub -->
+          <rect x="60" y="190" width="930" height="92" rx="16" fill="#101a30" stroke="#22d3a6"/>
+          <text x="90" y="222" class="lbl">FastAPI + WebSocket Hub</text>
+          <rect x="430" y="205" width="150" height="58" rx="10" fill="#0a0e17" stroke="#22304d"/>
+          <text x="505" y="230" text-anchor="middle" class="sub">DroneState</text>
+          <text x="505" y="248" text-anchor="middle" class="sub">frame_queue(maxsize=1)</text>
+          <rect x="620" y="205" width="150" height="58" rx="10" fill="#0a0e17" stroke="#22304d"/>
+          <text x="695" y="230" text-anchor="middle" class="sub">DashboardManager</text>
+          <text x="695" y="248" text-anchor="middle" class="sub">10 Hz yayın</text>
+          <rect x="800" y="205" width="170" height="58" rx="10" fill="#0a0e17" stroke="#22304d"/>
+          <text x="885" y="230" text-anchor="middle" class="sub">MetricsCollector</text>
+          <text x="885" y="248" text-anchor="middle" class="sub">JSONL + /api/metrics</text>
+
+          <!-- MCP server -->
+          <rect x="60" y="345" width="300" height="100" rx="14" fill="url(#gp)" stroke="#f5a623"/>
+          <text x="80" y="375" class="lbl">🔌 MCP Server (FastMCP)</text>
+          <text x="80" y="397" class="sub">Resources: kamera · IMU · motor · durum</text>
+          <text x="80" y="415" class="sub">Tools: stabilize · emergency_stop · turn …</text>
+          <text x="80" y="433" class="sub">Rule Engine (IF/THEN)</text>
+
+          <!-- agent -->
+          <rect x="390" y="345" width="290" height="100" rx="14" fill="url(#gp)" stroke="#f5a623"/>
+          <text x="410" y="375" class="lbl">🤖 Pydantic-AI Agent</text>
+          <text x="410" y="397" class="sub">DroneDecision (yapısal çıktı)</text>
+          <text x="410" y="415" class="sub">açıklanabilir gerekçe + güven skoru</text>
+          <text x="410" y="433" class="sub">güvenli geri-çekilme (fallback)</text>
+
+          <!-- ollama -->
+          <rect x="710" y="345" width="280" height="100" rx="14" fill="url(#gp)" stroke="#f5a623"/>
+          <text x="730" y="375" class="lbl">🧩 Ollama (yerel)</text>
+          <text x="730" y="397" class="sub">llava:7b (yerel vision)</text>
+          <text x="730" y="415" class="sub">OpenAI-uyumlu /v1 uç noktası</text>
+          <text x="730" y="433" class="sub">GPU/CPU üzerinde çıkarım</text>
+
+          <!-- arrows -->
+          <path class="flow" d="M145 135 V188"/>
+          <path class="flow alt dash" d="M905 188 V135"/>
+          <path class="flow" d="M210 282 V343"/>
+          <path class="flow" d="M505 282 V343"/>
+          <path class="flow" d="M360 395 H388"/>
+          <path class="flow alt dash" d="M388 420 H362"/>
+          <path class="flow" d="M680 395 H708"/>
+          <path class="flow alt dash" d="M708 420 H682"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 ─ DATA FLOW (sequence) ─────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Karar Döngüsü</div>
+    <h2>Bir "tick" içinde <span class="grad">ne olur?</span></h2>
+    <div class="body">
+      <div class="diagram">
+        <svg viewBox="0 0 1020 410" preserveAspectRatio="xMidYMid meet">
+          <!-- lifelines -->
+          <g class="sub" text-anchor="middle">
+            <text x="100" y="40" class="lbl">Telefon</text>
+            <text x="320" y="40" class="lbl">Hub</text>
+            <text x="540" y="40" class="lbl">Agent</text>
+            <text x="760" y="40" class="lbl">Ollama</text>
+            <text x="940" y="40" class="lbl">MCP Tools</text>
+          </g>
+          <g stroke="#22304d" stroke-dasharray="4 6">
+            <line x1="100" y1="55" x2="100" y2="380"/>
+            <line x1="320" y1="55" x2="320" y2="380"/>
+            <line x1="540" y1="55" x2="540" y2="380"/>
+            <line x1="760" y1="55" x2="760" y2="380"/>
+            <line x1="940" y1="55" x2="940" y2="380"/>
+          </g>
+          <g class="sub" style="font-size:12px">
+            <path class="flow" d="M104 90 H316"/><text x="210" y="82" text-anchor="middle" style="fill:#4f8cff">kare + IMU</text>
+            <path class="flow" d="M324 140 H536"/><text x="430" y="132" text-anchor="middle" style="fill:#4f8cff">en güncel kare</text>
+            <path class="flow" d="M544 190 H756"/><text x="650" y="182" text-anchor="middle" style="fill:#4f8cff">görüntü + telemetri promptu</text>
+            <path class="flow alt dash" d="M756 240 H544"/><text x="650" y="232" text-anchor="middle" style="fill:#22d3a6">DroneDecision (JSON)</text>
+            <path class="flow" d="M544 290 H936"/><text x="740" y="282" text-anchor="middle" style="fill:#4f8cff">tool çağrısı: stabilize()</text>
+            <path class="flow alt dash" d="M936 335 H324"/><text x="640" y="327" text-anchor="middle" style="fill:#22d3a6">motor durumu + log → panele yayın</text>
+          </g>
+        </svg>
+      </div>
+      <div class="cols-3">
+        <div class="card"><h3><span class="ico">⏱️</span> Geri Basınç</h3><p><code>frame_queue(maxsize=1)</code>: çıkarım sürerken biriken eski kareler atılır — model <b>daima</b> en güncel kareyi görür.</p></div>
+        <div class="card"><h3><span class="ico">📡</span> 10 Hz Yayın</h3><p>Panel, motorları ve karar günlüğünü saniyede 10 kez canlı alır.</p></div>
+        <div class="card"><h3><span class="ico">🧾</span> Açıklanabilirlik</h3><p>Her karar; eylem, tehlike düzeyi, gerekçe ve gecikme ile loglanır.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 ─ MCP ─────────────────────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Model Context Protocol</div>
+    <h2>MCP: modele <span class="grad">eller ve gözler</span> vermek</h2>
+    <div class="body">
+      <div class="cols">
+        <div class="card">
+          <h3><span class="ico">👁️</span> Resources — Salt Okunur Bağlam</h3>
+          <p>Modelin durumu "görmesini" sağlayan sensör anlık görüntüleri:</p>
+          <ul>
+            <li><span class="pill blue">drone://camera/latest-frame</span></li>
+            <li><span class="pill blue">drone://telemetry/imu</span></li>
+            <li><span class="pill blue">drone://motors/state</span></li>
+            <li><span class="pill blue">drone://system/status</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3><span class="ico">🛠️</span> Tools — Eylemler (Aktüatörler)</h3>
+          <p>Modelin dünyayı "değiştirmek" için çağırdığı fonksiyonlar:</p>
+          <ul>
+            <li><span class="pill green">stabilize_drone()</span></li>
+            <li><span class="pill danger">emergency_stop()</span></li>
+            <li><span class="pill green">adjust_motor_speed(id, speed)</span></li>
+            <li><span class="pill green">turn_left() · turn_right() · set_hover()</span></li>
+            <li><span class="pill warn">report_sensor_failure(...)</span></li>
+          </ul>
+        </div>
+      </div>
+      <p class="lead">Aynı MCP araç katmanı <b style="color:var(--ink)">her iki modda da</b> aktüatördür:
+        kural motoru ve agent, motorlara <b>aynı kapıdan</b> komut verir — bu, karşılaştırmayı adil kılar.</p>
+    </div>
+  </section>
+
+  <!-- 7 ─ RULE ENGINE ─────────────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Faz 3 · Kural Tabanlı Mod</div>
+    <h2>IF / THEN <span class="grad">karar merdiveni</span></h2>
+    <div class="body">
+      <div class="cols">
+        <div class="diagram" style="padding:1.4rem">
+          <svg viewBox="0 0 460 380" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <linearGradient id="gd" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#16203a"/><stop offset="1" stop-color="#0c111d"/></linearGradient>
+            </defs>
+            <rect x="150" y="20" width="160" height="46" rx="10" fill="url(#gd)" stroke="#22304d"/>
+            <text x="230" y="48" text-anchor="middle" class="sub">tilt = max(|pitch|,|roll|)</text>
+
+            <path class="flow" d="M230 66 V92"/>
+            <polygon points="230,92 320,128 230,164 140,128" fill="#101a30" stroke="#ff5c6c"/>
+            <text x="230" y="124" text-anchor="middle" class="sub">tilt ≥ 30° ?</text>
+            <text x="230" y="142" text-anchor="middle" class="sub" style="fill:#ff5c6c">DANGER</text>
+            <path class="flow" d="M320 128 H400 V190" /><text x="408" y="186" class="sub" style="fill:#ff5c6c">motor=100%</text>
+
+            <path class="flow" d="M230 164 V196"/>
+            <polygon points="230,196 320,232 230,268 140,232" fill="#101a30" stroke="#f5a623"/>
+            <text x="230" y="228" text-anchor="middle" class="sub">tilt ≥ 15° ?</text>
+            <text x="230" y="246" text-anchor="middle" class="sub" style="fill:#f5a623">WARNING</text>
+            <path class="flow" d="M320 232 H400 V294"/><text x="408" y="290" class="sub" style="fill:#f5a623">motor=75%</text>
+
+            <path class="flow" d="M230 268 V300"/>
+            <rect x="160" y="300" width="140" height="46" rx="10" fill="url(#gd)" stroke="#22d3a6"/>
+            <text x="230" y="328" text-anchor="middle" class="sub" style="fill:#22d3a6">HOVER · motor=50%</text>
+          </svg>
+        </div>
+        <div>
+          <pre><span class="c-com"># run_traditional_rules() — özet</span>
+<span class="c-key">if</span> not telemetry:
+    <span class="c-key">return</span> <span class="c-str">"NO_DATA"</span>   <span class="c-com"># son durumu koru</span>
+
+tilt = <span class="c-fn">max</span>(<span class="c-fn">abs</span>(beta), <span class="c-fn">abs</span>(gamma))
+
+<span class="c-key">if</span> tilt &gt;= <span class="c-num">30</span>:           <span class="c-com"># DANGER</span>
+    motors.<span class="c-fn">set_all</span>(<span class="c-num">100</span>)
+<span class="c-key">elif</span> tilt &gt;= <span class="c-num">15</span>:         <span class="c-com"># WARNING</span>
+    motors.<span class="c-fn">set_all</span>(<span class="c-num">75</span>)
+<span class="c-key">else</span>:                     <span class="c-com"># NOMINAL</span>
+    motors.<span class="c-fn">set_all</span>(<span class="c-num">50</span>)</pre>
+          <div class="feature"><div class="n">✓</div><div><h3>Deterministik</h3><p>Aynı girdi → daima aynı çıktı. Hata ayıklaması kolay.</p></div></div>
+          <div class="feature"><div class="n">✗</div><div><h3>Kör</h3><p>Kameradaki engeli göremez; yalnız sayısal eşikleri bilir.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 ─ AGENT LOOP ──────────────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Faz 4 · Agentik Mod</div>
+    <h2>Pydantic-AI + Ollama <span class="grad">otonom döngü</span></h2>
+    <div class="body">
+      <div class="cols">
+        <div>
+          <div class="feature"><div class="n">1</div><div><h3>Algıla</h3><p>En güncel kare + IMU telemetrisi tek bir çok-kipli (multimodal) prompt'a dönüştürülür.</p></div></div>
+          <div class="feature"><div class="n">2</div><div><h3>Akıl Yürüt</h3><p>Yerel görüntü-dil modeli durumu yorumlar ve <code>DroneDecision</code> yapısını üretir.</p></div></div>
+          <div class="feature"><div class="n">3</div><div><h3>Eyle</h3><p>Karar, MCP araç katmanına yönlendirilir (örn. <code>stabilize_drone()</code>).</p></div></div>
+          <div class="feature"><div class="n">4</div><div><h3>Açıkla &amp; Ölç</h3><p>Gerekçe, güven ve gecikme loglanır; panele yayınlanır.</p></div></div>
+        </div>
+        <div>
+          <pre><span class="c-com"># agent_core.py — bir tick</span>
+prompt = <span class="c-fn">build_prompt</span>(telemetry, frame, vision=<span class="c-key">True</span>)
+result = <span class="c-key">await</span> agent.<span class="c-fn">run</span>(prompt)
+d: <span class="c-ty">DroneDecision</span> = result.output
+
+<span class="c-key">await</span> <span class="c-fn">dispatch_decision</span>(d)   <span class="c-com"># → MCP tool</span>
+
+drone_state.<span class="c-fn">add_log</span>(<span class="c-str">"AGENT"</span>,
+    f<span class="c-str">"{d.action} ({d.hazard_level}) — {d.reasoning}"</span>)
+
+<span class="c-com"># Ollama erişilemezse: güvenli kural-tabanlı fallback</span>
+<span class="c-key">except</span> <span class="c-ty">Exception</span>:
+    d = <span class="c-fn">safe_fallback_decision</span>(telemetry, err)</pre>
+          <p style="margin-top:.9rem"><span class="pill green">temperature=0.1</span> <span class="pill blue">retries=2</span> <span class="pill warn">timeout=60s</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 ─ DroneDecision schema ────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Açıklanabilir Yapısal Çıktı</div>
+    <h2>Modelin sözleşmesi: <span class="grad">DroneDecision</span></h2>
+    <div class="body">
+      <div class="cols">
+        <div>
+          <pre><span class="c-key">class</span> <span class="c-ty">DroneDecision</span>(<span class="c-ty">BaseModel</span>):
+    action: <span class="c-ty">DroneAction</span>        <span class="c-com"># HOVER · STABILIZE …</span>
+    hazard_level: <span class="c-ty">HazardLevel</span>  <span class="c-com"># NONE … CRITICAL</span>
+    reasoning: <span class="c-ty">str</span>            <span class="c-com"># NEDEN bu karar?</span>
+    target_motor_speed: <span class="c-ty">int|None</span> <span class="c-com"># 0–100</span>
+    turn_degrees: <span class="c-ty">float|None</span>
+    confidence: <span class="c-ty">float</span>          <span class="c-com"># 0.0–1.0</span></pre>
+          <p class="lead">Pydantic, modelin çıktısını <b style="color:var(--ink)">şemaya zorlar</b>.
+            Geçersizse otomatik yeniden sorulur (retry). Böylece "serbest metin" değil,
+            doğrudan çalıştırılabilir bir karar elde edilir.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">🗣️</span> Gerçek bir karar örneği</h3>
+          <pre style="margin-top:.6rem">{
+  <span class="c-key">"action"</span>: <span class="c-str">"STABILIZE"</span>,
+  <span class="c-key">"hazard_level"</span>: <span class="c-str">"HIGH"</span>,
+  <span class="c-key">"reasoning"</span>: <span class="c-str">"35° eğim tehlike
+     eşiğinde; motorlar
+     eşitlenerek toparlanıyor."</span>,
+  <span class="c-key">"confidence"</span>: <span class="c-num">0.9</span>
+}</pre>
+          <p style="margin-top:.7rem">Bu gerekçe doğrudan jüri panelinde ve JSONL günlüğünde görünür — kara kutu değil.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 ─ HİBRİT MİMARİ ───────────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">İleri Yetenek · Hibrit Kontrolcü</div>
+    <h2>İki Katmanlı Düşünce: <span class="grad">Refleks + Muhakeme</span></h2>
+    <div class="body">
+      <div class="cols-3">
+        <div class="card"><h3><span class="ico">⚡</span> Refleks <span class="sub">(Sistem 1)</span></h3>
+          <p>Kural motoru <b>her tikte &lt;1 ms</b>'de güvenli komut üretir (10 Hz). Eğim tehlike eşiğini
+          aşarsa <b>anında</b> STABILIZE — LLM beklenmez. Güvenlik pazarlık konusu değildir.</p></div>
+        <div class="card"><h3><span class="ico">🧠</span> Muhakeme <span class="sub">(Sistem 2)</span></h3>
+          <p>Vision-LLM <b>ayrı bir coroutine'de arka planda</b> kamerayı ve eğim trendini yorumlar,
+          gerekçeli kararlar üretir. Yavaştır ama bağlam-farkındadır; refleksi <b>asla bloklamaz</b>.</p></div>
+        <div class="card"><h3><span class="ico">⚖️</span> Hakem <span class="sub">(subsumption)</span></h3>
+          <p>Refleks her zaman agent'ı <b>veto edebilir</b>; agent güvenliği asla gevşetemez.
+          Tehlikede <code>reflex-override</code>, güvenli durumda agent'ın zengin kararı uygulanır.</p></div>
+      </div>
+      <p class="lead"><b style="color:var(--ink)">Özü:</b> Kuralın <b>refleks hızı</b> + agentin
+        <b>bağlam-farkındalığı</b> tek kontrolcüde. Ollama çökse bile refleks tek başına güvenliği taşır —
+        <b>kusursuz bozulma</b>. IoT uç düğümü için ideal dayanıklılık modeli.</p>
+    </div>
+  </section>
+
+  <!-- 11 ─ BENCHMARK (3 mod) ────────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Faz 5 · Karşılaştırmalı Sonuçlar</div>
+    <h2>Kural <span class="vs-trad">vs</span> Agentik <span class="vs-agent">vs</span> <span class="grad">Hibrit</span></h2>
+    <div class="body">
+      <div class="cols">
+        <div class="card">
+          <h3><span class="ico">⚡</span> Karar Gecikmesi <span class="sub">(gerçek ölçüm · llava:7b vision · RTX 4060)</span></h3>
+          <div style="margin:.7rem 0 .3rem"><span class="vs-trad">Kural Tabanlı</span> · ~0.00 ms</div>
+          <div class="bar"><span class="b-trad" style="width:1%"></span></div>
+          <div style="margin:.9rem 0 .3rem"><span class="vs-hybrid">Hibrit (refleks+LLM)</span> · ~1.361 ms</div>
+          <div class="bar"><span class="b-hybrid" style="width:35%"></span></div>
+          <div style="margin:.9rem 0 .3rem"><span class="vs-agent">Agentik (yerel vision LLM)</span> · ~3.918 ms</div>
+          <div class="bar"><span class="b-agent" style="width:100%"></span></div>
+          <p style="margin-top:.9rem">Hibrit, agentik kararların <b style="color:var(--ink)">aynısını</b>
+             (23 STABILIZE) verir; ama ortalama gecikme <b style="color:var(--ink)">~2.9× düşük</b> —
+             tehlikede refleks LLM'i atlar.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">📊</span> Özet Tablo <span class="sub">(gradual_tilt · 24 karar/mod · 0 hata)</span></h3>
+          <table>
+            <tr><th>Ölçüt</th><th class="vs-trad">Kural</th><th class="vs-agent">Agentik</th><th class="vs-hybrid">Hibrit</th></tr>
+            <tr><td>Gecikme (ort)</td><td>~0.00 ms</td><td>~3.918 ms</td><td><b>~1.361 ms</b></td></tr>
+            <tr><td>p95 gecikme</td><td>0.01 ms</td><td>4.234 ms</td><td>3.613 ms</td></tr>
+            <tr><td>Güven (ort)</td><td>1.00</td><td>0.70</td><td>0.78</td></tr>
+            <tr><td>STABILIZE / 24</td><td>15</td><td>23</td><td><b>23</b></td></tr>
+            <tr><td>Bağlam (kamera)</td><td>Yok</td><td>Var</td><td><b>Var</b></td></tr>
+            <tr><td>Güvenlik garantisi</td><td><b>Refleks</b></td><td>LLM</td><td><b>Refleks</b></td></tr>
+            <tr><td>Hata oranı</td><td>0</td><td>0</td><td>0</td></tr>
+          </table>
+        </div>
+      </div>
+      <p class="lead"><b style="color:var(--ink)">Sonuç:</b> Hibrit, agentin <b>bağlam-farkındalığını</b>
+        (23 STABILIZE — kamerayı görür) kuralın <b>refleks güvencesiyle</b> birleştirir ve agentik moddan
+        <b>~2.9× hızlı</b> karar verir, sıfır hatayla. Üç paradigma rakip değil <b>tamamlayıcıdır</b>.
+        Çıktılar <code>benchmarks/results/*.csv · *.jsonl · *_summary.json</code> olarak saklanır.</p>
+    </div>
+  </section>
+
+  <!-- 11 ─ RESILIENCE ─────────────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Üretim Kalitesi</div>
+    <h2>Güvenlik &amp; <span class="grad">dayanıklılık</span></h2>
+    <div class="body">
+      <div class="cols-3">
+        <div class="card"><h3><span class="ico">🛟</span> Güvenli Fallback</h3><p>Ollama erişilemez, zaman aşımına uğrar veya geçersiz yanıt verirse, agent <b>kural-tabanlı güvenli eyleme</b> düşer. Döngü asla çökmez.</p></div>
+        <div class="card"><h3><span class="ico">🚦</span> Tek Aktif Kontrolcü</h3><p>Mod ne olursa olsun aynı anda <b>tek bir</b> kontrolcü motorlara komut verir; çakışma imkânsız.</p></div>
+        <div class="card"><h3><span class="ico">📉</span> Geri Basınç</h3><p><code>maxsize=1</code> kuyruk eski kareleri atar — gecikme birikmez, model güncel kalır.</p></div>
+        <div class="card"><h3><span class="ico">🧪</span> Test Kapsamı</h3><p>27 birim testi: kural eşikleri, agent kararları, dispatch, metrikler, durum. Tümü <code>pytest</code> ile yeşil.</p></div>
+        <div class="card"><h3><span class="ico">🧰</span> Offline Mock Model</h3><p>GPU'suz makinede bile tüm hat uçtan uca çalışır; benchmark ve CI bağımsızdır.</p></div>
+        <div class="card"><h3><span class="ico">🔒</span> Yapılandırılabilir</h3><p>Tüm eşikler, model adı ve zaman aşımları <code>.env</code> ile dışarıdan ayarlanır.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 ─ TECH STACK ─────────────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Teknoloji Yığını</div>
+    <h2>Ne ile <span class="grad">inşa edildi?</span></h2>
+    <div class="body">
+      <div class="cols-3">
+        <div class="card"><h3>🐍 Çekirdek</h3><p><span class="pill">Python 3.11</span> <span class="pill">uv</span> <span class="pill">asyncio</span></p></div>
+        <div class="card"><h3>🌐 Sunucu</h3><p><span class="pill blue">FastAPI</span> <span class="pill blue">Uvicorn</span> <span class="pill blue">WebSocket</span></p></div>
+        <div class="card"><h3>🔌 Protokol</h3><p><span class="pill warn">MCP</span> <span class="pill warn">FastMCP (SSE)</span></p></div>
+        <div class="card"><h3>🤖 Agent</h3><p><span class="pill green">Pydantic-AI</span> <span class="pill green">Pydantic v2</span></p></div>
+        <div class="card"><h3>🧠 LLM</h3><p><span class="pill">Ollama</span> <span class="pill">llava:7b</span> <span class="pill">yerel vision</span></p></div>
+        <div class="card"><h3>🖼️ Görüntü</h3><p><span class="pill">Pillow</span> <span class="pill">OpenCV</span> <span class="pill">NumPy</span></p></div>
+        <div class="card"><h3>🧪 Kalite</h3><p><span class="pill">pytest</span> <span class="pill">pytest-asyncio</span> <span class="pill">ruff</span></p></div>
+        <div class="card"><h3>🎨 Önyüz</h3><p><span class="pill">HTML5</span> <span class="pill">Vanilla JS</span> <span class="pill">SVG</span></p></div>
+        <div class="card"><h3>📈 Veri</h3><p><span class="pill">JSONL</span> <span class="pill">CSV</span> <span class="pill">/api/metrics</span></p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 ─ ROADMAP / CONCLUSION ───────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Sonuç &amp; Gelecek Çalışmalar</div>
+    <h2>Ne <span class="grad">başardık?</span></h2>
+    <div class="body">
+      <div class="cols">
+        <div>
+          <h3 style="margin-bottom:.8rem">Tamamlanan Fazlar</h3>
+          <div class="check">Faz 1–2: Telefon istemcisi + WebSocket akışı</div>
+          <div class="check">Faz 3: MCP sunucusu + kontrol paneli + kural motoru</div>
+          <div class="check">Faz 4: Pydantic-AI + Ollama otonom agent döngüsü</div>
+          <div class="check">Faz 5: Benchmark, test paketi ve yapısal loglama</div>
+          <div class="check">Faz 6: Türkçe jüri sunumu</div>
+          <div class="check">Ek: Hibrit kontrolcü (refleks + muhakeme, subsumption)</div>
+          <div class="check">Ek: Çoklu-kare kısa hafıza (eğim trendi)</div>
+        </div>
+        <div>
+          <h3 style="margin-bottom:.8rem">Gelecek Yönler</h3>
+          <div class="check">Daha küçük, hızlı yerel modellerle gecikme düşürme</div>
+          <div class="check">Hibrit deliberation'ı çoklu-adım planlamaya genişletme</div>
+          <div class="check">Gerçek mini-drone donanımına aktarım</div>
+          <div class="check">Sensör füzyonu: GPS, barometre, optik akış</div>
+        </div>
+      </div>
+      <div class="cols-3" style="margin-top:.4rem">
+        <div class="card"><div class="stat"><span class="v">3</span><span class="k">kontrol paradigması, tek mimari</span></div></div>
+        <div class="card"><div class="stat"><span class="v">46</span><span class="k">geçen birim testi</span></div></div>
+        <div class="card"><div class="stat"><span class="v">%100</span><span class="k">yerel — bulut bağımlılığı yok</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 ─ GÖRSEL NAVİGASYON (YENİ) ─────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Yeni Özellik · Görsel Navigasyon</div>
+    <h2>Kural <span style="color:var(--danger)">Kör</span> — AI <span class="grad">Görüyor</span></h2>
+    <div class="body">
+      <div class="cols">
+        <div class="card" style="border-color:rgba(255,92,108,.35)">
+          <h3><span class="ico">⊞</span> Geleneksel Sistem</h3>
+          <div style="font-family:var(--mono);font-size:.88rem;color:var(--accent);
+            background:rgba(79,140,255,.08);padding:10px 14px;border-radius:6px;margin:10px 0">
+            IF tilt(0.0°) &lt; 15°<br>THEN <b>HOVER</b> @ 50%<br><br>
+            📷 Kamera: <span style="color:var(--danger)">KULLANILMADI</span>
+          </div>
+          <p>Eğim sıfır → tehlike yok der. <b style="color:var(--danger)">Önündeki duvara çarpar.</b></p>
+        </div>
+        <div class="card" style="border-color:rgba(34,211,166,.35)">
+          <h3><span class="ico">★</span> Agentic AI (Görsel Navigasyon)</h3>
+          <div style="font-family:var(--mono);font-size:.82rem;color:var(--accent2);
+            background:rgba(34,211,166,.07);padding:10px 14px;border-radius:6px;margin:10px 0">
+            Kamera analizi: llava / qwen2.5vl<br>
+            "Önde duvar tespit edildi"<br>
+            → <b>TURN_LEFT 45°</b><br><br>
+            📷 Kamera: <span style="color:var(--accent2)">KULLANILDI ✓</span>
+          </div>
+          <p>AI kamerayı görür, senaryoyu anlar, engelden kaçar. <b style="color:var(--ink)">Kural bunu yapamaz.</b></p>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1rem">
+        <h3><span class="ico">🔀</span> Model Değiştirme — Canlı Demo</h3>
+        <p>Dashboard'da <b>MODEL seçici</b>: <code>llava:7b</code> · <code>qwen2.5vl:7b</code> · <code>llama3.2-vision</code>
+        arasında sunucu restart olmadan geçiş. <code>qwen2.5vl:7b</code> engel tespitinde çok daha güçlü.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 ─ CANLI DASHBOARD (YENİ) ─────────────────────────────────── -->
+  <section class="slide">
+    <div class="kicker">Kontrol Paneli · Yeni Özellikler</div>
+    <h2>Canlı <span class="grad">Demo Arayüzü</span></h2>
+    <div class="body">
+      <div class="cols-3">
+        <div class="card">
+          <h3><span class="ico">📊</span> Yan Yana Karşılaştırma</h3>
+          <p>Her iki mod aynı anda çalışır. Sol kart: <b>tam IF/THEN koşulu</b> ("IF tilt ≥ 30°") + <span style="color:var(--danger)">📷 Kamera Yok</span>. Sağ kart: AI gerekçesi + <span style="color:var(--accent2)">📷 Kamera ✓</span>.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">📈</span> Canlı Eğim Grafiği</h3>
+          <p>Son 60 saniyenin eğim açısı canvas grafiği. 15° ve 30° eşik çizgileri, kural (mavi) ve agent (mor) karar noktaları overlay. Jüri için görsel kanıt.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">⏱️</span> Gecikme Yarışı</h3>
+          <p>Alt panelde 3 renkli bar sürekli güncellenir: Kural (anında), Agent (yavaş), Hibrit (orta). Fark söze gerek bırakmaz.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">🤖</span> "AI Düşünüyor"</h3>
+          <p>Agentic modda LLM çıkarımı sırasında agent kartı üzerinde mor animasyon + saniye sayacı. 4 saniyelik bekleme artık görünür ve anlamlı.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">🎯</span> Demo Senaryoları</h3>
+          <p>Telefonsuz demo: 🟢 Sakin · 🟡 Eğim (0→45°) · 🔴 Kritik (0→43°) · 💨 Rüzgar · 🧠 AI Üstünlüğü. Her biri tek tuşla, sentetik telemetri enjeksiyonu.</p>
+        </div>
+        <div class="card">
+          <h3><span class="ico">📋</span> Oturum Raporu</h3>
+          <p>RAPOR butonu: her mod için gecikme min/ort/maks, eylem dağılımı (STABILIZE/HOVER yüzdeleri), doğruluk oranı. Tüm oturum tek ekranda.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 ─ CANLI DEMO GEÇİŞİ ──────────────────────────────────── -->
+  <section class="slide">
+    <div class="title-wrap" style="align-items:flex-start">
+      <span class="badge"><span class="dot"></span> Canlı Demo</span>
+      <h1><span class="grad">Şimdi Canlı</span> Demo</h1>
+      <p class="lead" style="font-size:1.1rem;margin-bottom:1.5rem">
+        Kontrol panelini açıyoruz — tüm sistemi gerçek zamanlı göreceğiz.
+      </p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;width:100%;margin-bottom:1.5rem">
+        <div class="card" style="padding:.9rem 1rem">
+          <h3 style="font-size:.85rem;margin-bottom:.5rem">📺 Demo Sırası</h3>
+          <ol style="font-size:.78rem;line-height:1.8;padding-left:1.2rem;color:var(--muted)">
+            <li><b style="color:var(--ink)">🟢 Sakin</b> — HOVER, her şey normal</li>
+            <li><b style="color:var(--ink)">🟡 Eğim</b> — 0→45°, kural + ajan karşılaştır</li>
+            <li><b style="color:var(--ink)">🔴 Kritik</b> — 0→43° acil, tam döngü</li>
+            <li><b style="color:var(--ink)">🧠 AI Üstünlüğü</b> — 13° (eşik altı!) Kural=HOVER, AI=STABİLİZE</li>
+            <li><b style="color:var(--ink)">🎯 Engel Tespiti</b> — kamerayı aç, önüne engel koy</li>
+          </ol>
+        </div>
+        <div class="card" style="padding:.9rem 1rem">
+          <h3 style="font-size:.85rem;margin-bottom:.5rem">🔑 Kilit Anlar</h3>
+          <ul style="font-size:.78rem;line-height:1.8;padding-left:1.2rem;color:var(--muted)">
+            <li>⚡ <b style="color:var(--ink)">Paradigmalar ayrıştı</b> — banner patladığında</li>
+            <li>🟠 <b style="color:var(--ink)">AI Düşünüyor</b> — latency farkı görünür</li>
+            <li>👁 <b style="color:var(--ink)">Kural kör, AI görür</b> — engel tespitinde</li>
+            <li>📈 <b style="color:var(--ink)">Eğim barı</b> — 0→43°→0 tam döngü</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="title-meta" style="font-size:.8rem">
+        <div><b>Dashboard</b><span style="color:var(--muted)">https://192.168.1.5:8000/</span></div>
+        <div><b>Telefon</b><span style="color:var(--muted)">https://192.168.1.5:8000/drone</span></div>
+        <div><b>Bu Sunum</b><span style="color:var(--muted)">https://192.168.1.5:8000/sunum</span></div>
+      </div>
+      <p style="margin-top:1.5rem;color:var(--line);font-family:var(--mono);font-size:.75rem">
+        Özgür &amp; Yiğit · 2026 · Tamamen yerel · Pydantic-AI + Ollama + FastMCP
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<div class="hint">← → / boşluk · F tam ekran · T süre · N UI gösterimi · O genel görünüm</div>
+<div class="chrome">
+  <div class="brand"><span class="dot"></span> Drone MCP · Rule-Based vs Agentic AI</div>
+  <div class="nav">
+    <button id="timerBtn" aria-label="Süre" title="Sunum süresi (T ile sıfırla)">⏱ 00:00</button>
+    <button id="prev" aria-label="Önceki">‹</button>
+    <span class="counter" id="counter">1 / 14</span>
+    <button id="next" aria-label="Sonraki">›</button>
+    <button id="notesBtn" aria-label="Notlar" title="UI'da gösterilecekler (N)">📺</button>
+    <button id="fs" aria-label="Tam ekran">⛶</button>
+  </div>
+</div>
+
+<!-- Speaker notes panel -->
+<div id="notesPanel" style="
+  position:fixed; left:0; right:0; bottom:54px; z-index:60;
+  background:rgba(10,14,23,.96); border-top:2px solid var(--accent);
+  padding:16px 26px; display:none; backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);">
+  <div style="font-family:var(--mono);font-size:.7rem;letter-spacing:.15em;
+    color:var(--accent2);text-transform:uppercase;margin-bottom:6px">📺 UI'DA GÖSTERİLECEKLER</div>
+  <div id="notesText" style="font-size:1.02rem;line-height:1.55;color:var(--ink);max-width:90ch"></div>
+</div>
+
+<!-- Slide overview grid -->
+<div id="overview" style="
+  position:fixed; inset:0; z-index:70; background:rgba(6,9,15,.93);
+  display:none; padding:5vh 6vw; overflow-y:auto;
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);">
+  <div style="font-size:1.1rem;font-weight:800;margin-bottom:18px;color:var(--ink)">
+    Slayt Genel Görünümü <span style="color:var(--muted);font-size:.8rem;font-weight:400">— numara/tıkla ile git, Esc kapat</span>
+  </div>
+  <div id="overviewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"></div>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let i = 0;
+
+  function show(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    counter.textContent = `${i + 1} / ${slides.length}`;  // auto-counts
+    progress.style.width = `${((i + 1) / slides.length) * 100}%`;
+    location.hash = i + 1;
+  }
+  function next(){ show(i + 1); }
+  function prev(){ show(i - 1); }
+
+  document.getElementById('next').onclick = next;
+  document.getElementById('prev').onclick = prev;
+  document.getElementById('fs').onclick = () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  };
+
+  // ── Speaker notes (per slide, Turkish talking points) ──────────────────────
+  const NOTES = [
+    "KAPAK. 'Ben Özgür, takım arkadaşım Yiğit. Akıllı telefonu bir drone gibi kullandık — kamera gözü, ivmeölçer dengesi. Tamamen yerel, bulut API yok. İki kontrol paradigmasını gerçek zamanlı karşılaştırıyoruz.'",
+    "PROBLEM. 'Bir drone beyni nasıl karar vermeli? İki sorun: (1) Kural tabanlı yaklaşım ölçeklenmez — her yeni sensör için yüzlerce yeni kural. (2) IF/THEN kör — kamera göremez, bağlamı anlayamaz.'",
+    "SİSTEM. 'Telefon = drone gövdesi. PC = yapay zekâ beyni. WebSocket gerçek zamanlı veri taşıyor.' Burada telefonu göster, dashboard bağlantısını söyle. Canlı verinin aktığını göster.",
+    "IoT MİMARİSİ. 'Telefon bir IoT uç düğümü. Sensör verisi kenar işleme yapıyor. MCP cihaz soyutlaması sağlıyor. Ollama yapay zekâyı cihazda çalıştırıyor. Bulut bağımlılığı sıfır.'",
+    "VERİ YOLU. 'Uçtan uca: kamera JPEG + IMU → WebSocket → FastMCP → Pydantic-AI → motor komutları. Geri basınç mekanizması ile hep en güncel kare işlenir, gecikme birikmez.'",
+    "TICK. 'Bir karar döngüsünde: sensör okunur, model çalışır, MCP araçları motorlara komut gönderir, metrik kaydedilir. Her tick 100ms.'",
+    "MCP. 'Model Context Protocol: modele hem eller (motor komutları) hem gözler (kamera, IMU kaynakları) verir. N×M entegrasyon sorunu N+M'e iner. Ölçeklenebilir mimari.'",
+    "GELENEKSEL — UI'DA GÖSTER: dashboard aç, mod 1 (Geleneksel), 🟡 Eğim demosu başlat. 'Sol kartta koşul: IF tilt≥15° → STABILIZE. <1ms, deterministik. KAMERA YOK etiketine dikkat — bu sistem kör.'",
+    "AGENTİK — UI'DA GÖSTER: mod 2 (AI Ajan), 🧠 AI Üstünlüğü demosu başlat. 'Eğim 13° — kural eşiği 15°, kural HOVER der. AMA AI trendi görüyor: 5 ölçümde yükseliş → STABİLİZE. IF/THEN bunu yapamaz.'",
+    "ŞEMA. 'DroneDecision yapısı: eylem + tehlike seviyesi + gerekçe + güven skoru. Yapısal çıktı — Ollama şema-kısıtlı JSON üretiyor. Açıklanabilir yapay zekâ.'",
+    "HİBRİT KAVRAM. 'İki katman aynı anda çalışır: refleks (kural, <1ms, güvenlik tabanı) ve muhakeme (LLM, bağlam). Ollama çökerse refleks güvenliği tek başına taşır.'",
+    "BENCHMARK. 'RTX 4060 gerçek ölçüm: Kural ~0ms, Agent ~3900ms. Kural hızlı ama kör; AI yavaş ama akıllı. AI Üstünlüğü senaryosunda bu farkın ANLAMI görünüyor.'",
+    "DAYANIKLILIK. 'Güvenli fallback, 66 test yeşil, geri basınç, yapısal çıktı. Üretim kalitesi mimari — edge AI için referans uygulama.'",
+    "TEKNOLOJİ. 'Python, FastAPI, FastMCP, Pydantic-AI, Ollama — hepsi açık kaynak, tamamen yerel. Veri gizliliği tam, bulut maliyeti sıfır.'",
+    "SONUÇLAR. 'Üç paradigma karşılaştırıldı. Geleneksel: hızlı ama kör. AI Ajan: yavaş ama bağlam-farkındalıklı. Hibrit: ikisinin en iyisi. MCP entegrasyon sorununu çözüyor.'",
+    "ENGEL TESPİTİ — UI'DA GÖSTER: 🎯 Engel Tespiti butonuna bas, kamera aç, önüne elini tut. 'Eğim SIFIR — kural tehlike yok sanıyor. AI kamerada engel görüyor → STOP veya TURN. Kural GÖREMEZ.'",
+    "ARAYÜZ. 'Canlı eğim barı, yan yana karar kartları, paradigma ayrışma banner, 3D drone görseli, demo senaryoları. Tüm sistem tek ekranda, jüri için.'",
+    "KAPANIŞ. 'IF/THEN hızlı ama kör. LLM görür ama yavaş. Doğru mimari: ikisini bağlam-farkında katmanlar halinde birleştir. MCP ölçeklenebilirliği sağlar. Teşekkürler.'",
+  ];
+
+  const notesPanel = document.getElementById('notesPanel');
+  const notesText  = document.getElementById('notesText');
+  let notesOn = false;
+  function refreshNotes() {
+    if (notesText) notesText.textContent = NOTES[i] || '(not yok)';
+  }
+  function toggleNotes() {
+    notesOn = !notesOn;
+    if (notesPanel) notesPanel.style.display = notesOn ? 'block' : 'none';
+    refreshNotes();
+  }
+  document.getElementById('notesBtn').onclick = toggleNotes;
+
+  // ── Presenter timer ────────────────────────────────────────────────────────
+  let timerStart = null, timerInt = null;
+  const timerBtn = document.getElementById('timerBtn');
+  function fmtTime(s){ const m=Math.floor(s/60), ss=s%60; return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
+  function tickTimer(){
+    if (!timerStart) return;
+    const s = Math.floor((Date.now()-timerStart)/1000);
+    timerBtn.textContent = '⏱ ' + fmtTime(s);
+    // 8 min → yellow, 10 min → red
+    timerBtn.style.color = s >= 600 ? 'var(--danger)' : s >= 480 ? 'var(--warn)' : '';
+  }
+  function startTimer(){ timerStart = Date.now(); clearInterval(timerInt); timerInt = setInterval(tickTimer, 1000); tickTimer(); }
+  function resetTimer(){ timerStart = Date.now(); tickTimer(); }
+  timerBtn.onclick = resetTimer;
+
+  // ── Overview grid ──────────────────────────────────────────────────────────
+  const overview = document.getElementById('overview');
+  const overviewGrid = document.getElementById('overviewGrid');
+  let overviewOn = false;
+  function buildOverview(){
+    overviewGrid.innerHTML = '';
+    slides.forEach((s, k) => {
+      const h = s.querySelector('h1,h2');
+      const title = h ? h.textContent.trim() : ('Slayt ' + (k+1));
+      const card = document.createElement('div');
+      card.style.cssText = 'background:var(--panel);border:1px solid var(--line);border-radius:10px;'+
+        'padding:14px;cursor:pointer;transition:all .15s;min-height:74px';
+      card.innerHTML = '<div style="font-family:var(--mono);font-size:.7rem;color:var(--accent2)">'+(k+1)+'</div>'+
+        '<div style="font-size:.82rem;color:var(--ink);margin-top:4px;line-height:1.3">'+title+'</div>';
+      card.onmouseover = () => { card.style.borderColor='var(--accent)'; card.style.transform='translateY(-2px)'; };
+      card.onmouseout  = () => { card.style.borderColor='var(--line)'; card.style.transform='none'; };
+      card.onclick = () => { show(k); toggleOverview(); };
+      overviewGrid.appendChild(card);
+    });
+  }
+  function toggleOverview(){
+    overviewOn = !overviewOn;
+    if (overviewOn) buildOverview();
+    overview.style.display = overviewOn ? 'block' : 'none';
+  }
+
+  // Refresh notes whenever the slide changes
+  const _origShow = show;
+  show = function(n){ _origShow(n); refreshNotes(); };
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { if (overviewOn) toggleOverview(); if (notesOn) toggleNotes(); return; }
+    if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'f') document.getElementById('fs').click();
+    else if (e.key.toLowerCase() === 't') resetTimer();
+    else if (e.key.toLowerCase() === 'n') toggleNotes();
+    else if (e.key.toLowerCase() === 'o') toggleOverview();
+    else if (/^[0-9]$/.test(e.key) && overviewOn) { const idx=parseInt(e.key)-1; if(idx>=0&&idx<slides.length){show(idx);toggleOverview();} }
+  });
+
+  startTimer();
+
+  // Touch swipe
+  let tx = 0;
+  addEventListener('touchstart', e => tx = e.changedTouches[0].clientX, {passive:true});
+  addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) (dx < 0 ? next() : prev());
+  }, {passive:true});
+
+  // Deep-link via hash
+  const start = parseInt((location.hash || '').replace('#','')) || 1;
+  show(start - 1);
+</script>
+</body>
+</html>

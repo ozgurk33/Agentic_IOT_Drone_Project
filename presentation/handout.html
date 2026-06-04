@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drone MCP — Jüri Özeti (Tek Sayfa)</title>
+<style>
+  :root{
+    --ink:#1a1f2b; --muted:#5b6675; --line:#d6dce6;
+    --blue:#2f6bd6; --purple:#7b46d1; --green:#1d9d5a; --red:#d23b3b; --bg:#fff;
+    --sans:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+    --mono:'SFMono-Regular',ui-monospace,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{ background:#e9edf3; color:var(--ink); font-family:var(--sans); padding:18px; }
+  .sheet{
+    width:210mm; min-height:297mm; margin:0 auto; background:var(--bg);
+    padding:16mm 15mm; box-shadow:0 8px 40px rgba(0,0,0,.18); border-radius:4px;
+  }
+  header{ display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:3px solid var(--ink); padding-bottom:10px; margin-bottom:14px; }
+  h1{ font-size:21pt; line-height:1.05; letter-spacing:-.5px; }
+  h1 small{ display:block; font-size:10.5pt; font-weight:500; color:var(--muted); margin-top:4px; }
+  .by{ text-align:right; font-size:9pt; color:var(--muted); line-height:1.5; }
+  .by b{ color:var(--ink); font-size:11pt; }
+  h2{ font-size:11pt; color:var(--blue); text-transform:uppercase; letter-spacing:.5px;
+    margin:14px 0 7px; padding-bottom:3px; border-bottom:1px solid var(--line); }
+  p,li{ font-size:9.7pt; line-height:1.5; color:#333; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .pill{ display:inline-block; font-family:var(--mono); font-size:8pt;
+    background:#eef2f8; border:1px solid var(--line); border-radius:4px;
+    padding:2px 7px; margin:2px 3px 2px 0; color:#33405a; }
+  .flow{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:6px 0; }
+  .node{ font-family:var(--mono); font-size:8pt; background:#f3f6fb;
+    border:1px solid var(--line); border-radius:5px; padding:5px 8px; font-weight:600; }
+  .arrow{ color:var(--blue); font-weight:bold; }
+  table{ width:100%; border-collapse:collapse; margin-top:4px; }
+  th,td{ text-align:left; font-size:9pt; padding:5px 7px; border-bottom:1px solid var(--line); }
+  th{ color:var(--muted); font-size:8pt; text-transform:uppercase; letter-spacing:.4px; }
+  .c-blue{color:var(--blue);font-weight:600} .c-pur{color:var(--purple);font-weight:600}
+  .c-grn{color:var(--green);font-weight:600} .c-red{color:var(--red);font-weight:600}
+  .box{ border:1px solid var(--line); border-radius:7px; padding:10px 12px; background:#fafbfd; }
+  .box h3{ font-size:9.5pt; margin-bottom:4px; }
+  .tag{ font-size:7.5pt; font-weight:700; padding:1px 6px; border-radius:3px; }
+  .tag.no{ background:#fdeaea; color:var(--red); } .tag.yes{ background:#e7f6ed; color:var(--green); }
+  footer{ margin-top:16px; padding-top:8px; border-top:1px solid var(--line);
+    font-size:8pt; color:var(--muted); display:flex; justify-content:space-between; }
+  .kpi{ display:flex; gap:10px; margin:6px 0; }
+  .kpi div{ flex:1; text-align:center; background:#f3f6fb; border-radius:6px; padding:8px 4px; }
+  .kpi .n{ font-size:15pt; font-weight:800; } .kpi .l{ font-size:7.5pt; color:var(--muted); }
+  @media print{ body{background:#fff;padding:0} .sheet{box-shadow:none;width:auto;margin:0} .noprint{display:none} }
+  .printbtn{ position:fixed; top:14px; right:14px; background:var(--ink); color:#fff;
+    border:none; border-radius:6px; padding:9px 16px; font-size:9pt; cursor:pointer; font-weight:600; }
+</style>
+</head>
+<body>
+<button class="printbtn noprint" onclick="window.print()">🖨 Yazdır / PDF</button>
+<div class="sheet">
+
+  <header>
+    <h1>🚁 Akıllı Telefon Tabanlı Otonom Drone Simülasyonu
+      <small>Geleneksel (IF/THEN) vs Agentic AI — MCP ile Yerel Yapay Zekâ Entegrasyonu</small>
+    </h1>
+    <div class="by"><b>Yiğit</b><br>2026 · Üniversite Jüri Sunumu<br>Tamamen yerel · Bulut LLM yok</div>
+  </header>
+
+  <h2>Problem</h2>
+  <div class="grid2">
+    <p><b>N×M entegrasyon çıkmazı:</b> Her sensör (N) için her eylemi (M) ayrı ayrı
+    kodlamak ölçeklenmez. 5 sensör × 5 eylem = 25 elle yazılmış kural. Yeni bir
+    sensör eklemek tüm matrisi büyütür.</p>
+    <p><b>Geleneksel otomasyon kördür:</b> IF/THEN kuralları yalnızca sayısal eşiklere
+    bakar. Drone dümdüz uçarken (eğim 0°) önünde duvar olsa bile "tehlike yok" der —
+    kamerayı yorumlayamaz, dinamik engelleri göremez.</p>
+  </div>
+
+  <h2>Geliştirilen Sistem — Veri Akışı</h2>
+  <div class="flow">
+    <span class="node">📱 Telefon (kamera + IMU)</span><span class="arrow">→</span>
+    <span class="node">WebSocket (JPEG + telemetri)</span><span class="arrow">→</span>
+    <span class="node">FastMCP Sunucusu</span><span class="arrow">→</span>
+    <span class="node">Pydantic-AI Ajanı</span><span class="arrow">→</span>
+    <span class="node">Ollama (yerel vision LLM)</span><span class="arrow">→</span>
+    <span class="node">⚙ Motor komutları</span>
+  </div>
+  <p style="margin-top:4px"><b>MCP'nin rolü:</b> Sensörleri <i>kaynak</i>, eylemleri <i>araç</i> olarak
+  standartlaştırır → N×M yerine <b>N+M</b>. LLM bu araçları otonom çağırır; prompt'a sensör
+  mantığı gömülmez. Geri basınç (kuyruk=1) ile model her zaman en güncel kareyi işler.</p>
+
+  <h2>Üç Kontrol Paradigması & Sonuçlar</h2>
+  <div class="grid2">
+    <table>
+      <tr><th>Ölçüt</th><th class="c-blue">Kural</th><th class="c-pur">Agentik</th><th class="c-grn">Hibrit</th></tr>
+      <tr><td>Karar gecikmesi (ort)</td><td>~0 ms</td><td>~3900 ms</td><td><b>~1361 ms</b></td></tr>
+      <tr><td>Kamera/bağlam</td><td><span class="tag no">YOK</span></td><td><span class="tag yes">VAR</span></td><td><span class="tag yes">VAR</span></td></tr>
+      <tr><td>Güvenlik garantisi</td><td><b>Refleks</b></td><td>LLM</td><td><b>Refleks</b></td></tr>
+      <tr><td>Açıklanabilirlik</td><td>Kural kimliği</td><td><b>Doğal dil</b></td><td><b>Doğal dil</b></td></tr>
+      <tr><td>Hata oranı</td><td>0</td><td>0</td><td>0</td></tr>
+    </table>
+    <div class="box">
+      <h3>🎯 Kanıt anı: "Kural kör, AI görür"</h3>
+      <p style="font-size:9pt">Drone düz (eğim 0°). <b class="c-blue">Kural:</b> HOVER — tehlike
+      yok (kamerayı görmez). <b class="c-pur">AI:</b> kamerada duvarı tespit eder →
+      <b>TURN_LEFT</b>. Aynı anda, aynı veride iki paradigma <b>ayrışır</b> — agentic
+      yaklaşımın katma değeri tam olarak burada görünür.</p>
+    </div>
+  </div>
+  <div class="kpi">
+    <div><div class="n c-blue">&lt;1ms</div><div class="l">Kural tepki</div></div>
+    <div><div class="n c-grn">2.9×</div><div class="l">Hibrit hız avantajı</div></div>
+    <div><div class="n c-pur">100%</div><div class="l">Yerel (bulut yok)</div></div>
+    <div><div class="n">66</div><div class="l">Otomatik test</div></div>
+  </div>
+
+  <h2>Mühendislik & Dayanıklılık</h2>
+  <div class="grid3">
+    <div class="box"><h3>🛟 Güvenli Fallback</h3><p style="font-size:8.5pt">Ollama erişilemezse
+      agent kural-tabanlı güvenli eyleme düşer; döngü asla çökmez.</p></div>
+    <div class="box"><h3>⚡ İki Katman</h3><p style="font-size:8.5pt">Refleks (hız+güvenlik)
+      + muhakeme (bağlam). Yüksek seviye görev planlaması için ideal yerleşim.</p></div>
+    <div class="box"><h3>🔒 Açıklanabilir Log</h3><p style="font-size:8.5pt">Her karar
+      gerekçe + güven + gecikme ile JSONL'e yazılır; CSV dışa aktarım.</p></div>
+  </div>
+
+  <h2>Teknoloji Yığını</h2>
+  <div>
+    <span class="pill">Python 3.11</span><span class="pill">FastAPI</span><span class="pill">WebSocket</span>
+    <span class="pill">FastMCP (SSE)</span><span class="pill">Pydantic-AI</span><span class="pill">Ollama</span>
+    <span class="pill">llava:7b / qwen2.5vl</span><span class="pill">Pillow/OpenCV</span>
+    <span class="pill">pytest (66)</span><span class="pill">HTML5/Canvas/SVG</span>
+  </div>
+
+  <footer>
+    <span>Kontrol Paneli: https://&lt;pc-ip&gt;:8000/ · Sunum: /sunum · Bu özet: /ozet</span>
+    <span>Geliştirici: Yiğit · Agentic AI – IoT Entegrasyonu</span>
+  </footer>
+
+</div>
+</body>
+</html>

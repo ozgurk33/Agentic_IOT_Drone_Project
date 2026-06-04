@@ -1,0 +1,3978 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Kontrol Paneli</title>
+    <style>
+        /* ── Design tokens ──────────────────────────────────────────────────── */
+        :root {
+            --bg:          #0d1117;
+            --surface:     #161b22;
+            --surface2:    #0e1318;
+            --border:      #30363d;
+            --text:        #c9d1d9;
+            --dim:         #8b949e;
+            --green:       #3fb950;
+            --green-bright:#00e676;
+            --red:         #f85149;
+            --blue:        #58a6ff;
+            --purple:      #bc8cff;
+            --yellow:      #e3b341;
+            --teal:        #79c0ff;
+            --matrix-bg:   #060e07;
+            --matrix-text: #00e676;
+            --matrix-dim:  #1a4d23;
+        }
+
+        /* ── Reset ──────────────────────────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── HEADER ─────────────────────────────────────────────────────────── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .logo-group { display: flex; align-items: center; gap: 14px; }
+
+        .logo {
+            font-size: 1.1rem; font-weight: bold;
+            color: var(--blue); letter-spacing: 2px;
+        }
+
+        .badge-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+        .badge {
+            display: flex; align-items: center; gap: 6px;
+            padding: 3px 10px; border-radius: 12px;
+            font-size: 0.68rem; font-weight: bold; letter-spacing: .5px;
+            border: 1px solid var(--border); background: var(--bg);
+            white-space: nowrap;
+        }
+        .badge.ok     { border-color: var(--green);  color: var(--green);  }
+        .badge.err    { border-color: var(--red);     color: var(--red);    }
+        .badge.warn   { border-color: var(--yellow);  color: var(--yellow); }
+        .badge.info   { border-color: var(--blue);    color: var(--blue);   }
+
+        .dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: currentColor;
+        }
+        .dot.pulse { animation: pulse .9s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+        /* ── MODE TOGGLE ─────────────────────────────────────────────────────── */
+        .mode-toggle {
+            display: flex; border-radius: 8px; overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .mode-btn {
+            padding: 7px 16px; border: none; cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem; font-weight: bold; letter-spacing: .5px;
+            background: var(--bg); color: var(--dim);
+            transition: all .25s;
+        }
+
+        .mode-btn.active-traditional {
+            background: var(--blue); color: #0d1117;
+        }
+        .mode-btn.active-agentic {
+            background: var(--purple); color: #0d1117;
+        }
+        .mode-btn.active-hybrid {
+            background: var(--green); color: #0d1117;
+        }
+        .mode-btn:hover:not(.active-traditional):not(.active-agentic):not(.active-hybrid) {
+            background: var(--surface); color: var(--text);
+        }
+
+        /* ── MAIN GRID ───────────────────────────────────────────────────────── */
+        .main-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 3fr 2fr;
+            grid-template-rows: 1fr 140px auto;
+            gap: 0;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* ── LEFT PANEL ──────────────────────────────────────────────────────── */
+        .left-panel {
+            grid-column: 1;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* ── Camera card ────────────────────────────────────────────────────── */
+        .camera-wrap {
+            position: relative;
+            background: #000;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        #camImg {
+            width: 100%; height: 100%;
+            object-fit: contain; display: block;
+        }
+
+        .cam-placeholder {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: #040a06;
+            color: var(--dim);
+        }
+
+        .no-signal-text {
+            font-size: 1.6rem; font-weight: bold;
+            letter-spacing: 4px;
+            color: var(--border);
+            animation: flicker 3s infinite;
+        }
+        @keyframes flicker {
+            0%,94%,96%,98%,100%{opacity:.55} 95%,97%,99%{opacity:.1}
+        }
+
+        .scanlines {
+            position: absolute; inset: 0; pointer-events: none;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0px,
+                transparent 3px,
+                rgba(0,0,0,.18) 3px,
+                rgba(0,0,0,.18) 4px
+            );
+        }
+
+        /* Overlay info (fps, resolution) */
+        .cam-overlay-info {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            display: flex; justify-content: space-between;
+            padding: 4px 10px;
+            background: linear-gradient(transparent, rgba(0,0,0,.7));
+            font-size: 0.65rem; color: rgba(255,255,255,.5);
+        }
+
+        /* Corner brackets */
+        .bkt {
+            position: absolute; width: 18px; height: 18px;
+            border-color: var(--blue); border-style: solid; opacity: .45;
+        }
+        .bkt.tl{top:6px;left:6px;border-width:2px 0 0 2px}
+        .bkt.tr{top:6px;right:6px;border-width:2px 2px 0 0}
+        .bkt.bl{bottom:6px;left:6px;border-width:0 0 2px 2px}
+        .bkt.br{bottom:6px;right:6px;border-width:0 2px 2px 0}
+
+        /* ── Telemetry strip ────────────────────────────────────────────────── */
+        .tele-strip {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            background: var(--border); gap: 1px;
+            flex-shrink: 0;
+        }
+
+        .tele-cell {
+            background: var(--surface2);
+            padding: 4px 4px; text-align: center;
+        }
+
+        .tele-lbl {
+            font-size: 0.55rem; color: var(--dim);
+            text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px;
+        }
+
+        .tele-val {
+            font-size: 0.82rem; font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .v-ax{color:#f85149} .v-ay{color:#3fb950} .v-az{color:#58a6ff}
+        .v-al{color:#bc8cff} .v-be{color:#e3b341} .v-ga{color:#79c0ff}
+
+        /* ── RIGHT PANEL: Matrix terminal ───────────────────────────────────── */
+        .right-panel {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid var(--border);
+            background: var(--matrix-bg);
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .terminal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 14px;
+            background: #0a130a;
+            border-bottom: 1px solid #1a3d1a;
+            flex-shrink: 0;
+        }
+
+        .terminal-title {
+            font-size: 0.75rem; color: var(--matrix-text);
+            letter-spacing: 2px; text-transform: uppercase;
+        }
+
+        .terminal-controls { display: flex; gap: 8px; }
+
+        .term-btn {
+            background: none; border: 1px solid var(--matrix-dim);
+            color: var(--matrix-text); border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.65rem; padding: 2px 8px; cursor: pointer;
+            transition: all .15s;
+        }
+        .term-btn:hover { background: var(--matrix-dim); }
+
+        .terminal-body {
+            flex: 1; overflow-y: auto;
+            padding: 10px 14px;
+            font-size: 0.72rem; line-height: 1.7;
+            color: var(--matrix-text);
+            min-height: 0;
+        }
+
+        /* Scrollbar — thin green */
+        .terminal-body::-webkit-scrollbar { width: 3px; }
+        .terminal-body::-webkit-scrollbar-track { background: var(--matrix-bg); }
+        .terminal-body::-webkit-scrollbar-thumb { background: var(--matrix-dim); border-radius: 2px; }
+
+        .log-line {
+            display: flex; gap: 8px; align-items: baseline;
+            animation: fadein .25s ease;
+        }
+        @keyframes fadein { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+        .log-ts    { color: #3a6e42; flex-shrink: 0; font-size: 0.65rem; }
+        .log-src   { color: #00a040; min-width: 54px; flex-shrink: 0; font-size: 0.65rem; }
+        .log-msg   { word-break: break-word; }
+
+        .log-line.WARN  .log-msg { color: var(--yellow); }
+        .log-line.ERROR .log-msg { color: var(--red); }
+        .log-line.INFO  .log-msg { color: var(--matrix-text); }
+
+        /* Blinking cursor */
+        .cursor {
+            display: inline-block; width: 8px; height: 14px;
+            background: var(--matrix-text); margin-left: 4px;
+            vertical-align: middle;
+            animation: blink-cur .8s step-end infinite;
+        }
+        @keyframes blink-cur { 0%,100%{opacity:1} 50%{opacity:0} }
+
+        /* ── BOTTOM PANEL: Motor state ───────────────────────────────────────── */
+        .bottom-panel {
+            grid-column: 1 / -1;
+            grid-row: 3;
+            display: flex;
+            align-items: stretch;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .motor-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 18px;
+        }
+
+        .motor-label {
+            font-size: 0.65rem; color: var(--dim);
+            text-transform: uppercase; letter-spacing: .5px;
+            min-width: 60px;
+        }
+
+        .motor-grid {
+            display: flex; gap: 10px; flex: 1;
+        }
+
+        .motor-box {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; gap: 4px; min-width: 0;
+        }
+
+        .motor-id {
+            font-size: 0.65rem; color: var(--dim);
+            text-transform: uppercase; letter-spacing: .5px;
+        }
+
+        .motor-bar-wrap {
+            width: 100%; height: 6px;
+            background: var(--border); border-radius: 3px; overflow: hidden;
+        }
+
+        .motor-bar {
+            height: 100%; border-radius: 3px;
+            background: var(--green);
+            transition: width .4s ease, background .4s;
+        }
+        .motor-bar.danger   { background: var(--red); }
+        .motor-bar.stabilize{ background: var(--yellow); }
+
+        .motor-pct {
+            font-size: 0.72rem; font-weight: bold;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Right section of bottom bar: mode badge + stats */
+        .status-section {
+            display: flex; align-items: center; gap: 14px;
+            padding: 10px 18px;
+            border-left: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .big-mode {
+            font-size: 0.8rem; font-weight: bold; letter-spacing: 1px;
+            padding: 5px 14px; border-radius: 6px; border: 1px solid var(--border);
+        }
+        .big-mode.traditional { background: rgba(88,166,255,.12); color: var(--blue); border-color: var(--blue); }
+        .big-mode.agentic     { background: rgba(188,140,255,.12); color: var(--purple); border-color: var(--purple); }
+        .big-mode.hybrid      { background: rgba(63,185,80,.12); color: var(--green); border-color: var(--green); }
+
+        .stat-mini { text-align: center; }
+        .stat-mini .lbl { font-size: 0.58rem; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; }
+        .stat-mini .val { font-size: 1rem; font-weight: bold; color: var(--teal); }
+
+        /* ── Model selector ──────────────────────────────────────────────────── */
+        .model-selector {
+            display: flex; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 8px;
+            border: 1px solid var(--border); background: var(--bg);
+        }
+        .model-lbl {
+            font-size: .6rem; color: var(--dim); letter-spacing: .5px;
+            text-transform: uppercase; flex-shrink: 0;
+        }
+        .model-btn {
+            padding: 3px 10px; border-radius: 5px; cursor: pointer;
+            font-family: 'Courier New', monospace; font-size: .65rem;
+            font-weight: bold; background: var(--bg);
+            border: 1px solid var(--border); color: var(--dim);
+            transition: all .2s; white-space: nowrap;
+        }
+        .model-btn.active-model {
+            background: rgba(121,192,255,.15);
+            border-color: var(--teal); color: var(--teal);
+        }
+        .model-btn:hover:not(.active-model) {
+            border-color: var(--dim); color: var(--text);
+        }
+        .model-btn:disabled { opacity: .4; cursor: not-allowed; }
+        .model-loading { animation: pulse .8s infinite; }
+        @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+        /* ── Live tilt chart panel ─────────────────────────────────────────── */
+        .chart-panel {
+            grid-column: 1 / -1; grid-row: 2;
+            height: 140px; flex-shrink: 0;
+            background: var(--surface2);
+            border-top: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        .chart-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 5px 14px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .chart-title {
+            font-size: .6rem; color: var(--teal); font-weight: bold;
+            letter-spacing: 1.2px; text-transform: uppercase;
+        }
+        .chart-legend { display: flex; gap: 12px; }
+        .chart-legend span {
+            font-size: .58rem; color: var(--dim);
+        }
+        #tiltChart {
+            flex: 1; width: 100%; display: block;
+            cursor: crosshair;
+        }
+
+        /* ── Session Report panel ───────────────────────────────────────────── */
+        #reportPanel {
+            position: fixed; top: 0; right: 0; bottom: 0;
+            width: 380px; z-index: 800;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            transform: translateX(100%);
+            transition: transform .3s ease;
+            box-shadow: -4px 0 20px rgba(0,0,0,.5);
+        }
+        #reportPanel.open { transform: translateX(0); }
+        .report-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; border-bottom: 1px solid var(--border);
+            background: var(--bg); flex-shrink: 0;
+        }
+        .report-header-title {
+            font-size: .8rem; font-weight: bold; color: var(--text);
+            letter-spacing: 1px;
+        }
+        .report-close {
+            background: none; border: none; color: var(--dim); font-size: 1rem;
+            cursor: pointer; padding: 4px 8px;
+        }
+        .report-close:hover { color: var(--red); }
+        .report-body { flex: 1; overflow-y: auto; padding: 14px; }
+        .report-section {
+            margin-bottom: 18px;
+        }
+        .report-section-title {
+            font-size: .62rem; color: var(--dim); text-transform: uppercase;
+            letter-spacing: .8px; margin-bottom: 10px;
+            padding-bottom: 4px; border-bottom: 1px solid var(--border);
+        }
+        .report-stat-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 0; border-bottom: 1px solid rgba(48,54,61,.5);
+        }
+        .report-stat-label { font-size: .68rem; color: var(--dim); }
+        .report-stat-val   { font-size: .78rem; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .report-bar-row { margin-bottom: 8px; }
+        .report-bar-label {
+            display: flex; justify-content: space-between;
+            font-size: .62rem; color: var(--dim); margin-bottom: 3px;
+        }
+        .report-bar-track {
+            height: 8px; background: rgba(255,255,255,.06);
+            border-radius: 4px; overflow: hidden;
+        }
+        .report-bar-fill {
+            height: 100%; border-radius: 4px; transition: width .8s ease;
+        }
+        .report-refresh-btn {
+            width: 100%; margin-top: 10px; padding: 8px;
+            border-radius: 6px; border: 1px solid var(--border);
+            background: var(--bg); color: var(--dim);
+            font-family: 'Courier New', monospace; font-size: .68rem;
+            cursor: pointer; transition: all .15s;
+        }
+        .report-refresh-btn:hover { border-color: var(--teal); color: var(--teal); }
+
+        /* ── Camera AI annotation overlay ──────────────────────────────────── */
+        .cam-ai-badge {
+            position: absolute; top: 8px; left: 10px;
+            padding: 2px 8px; border-radius: 4px;
+            font-size: .6rem; font-weight: bold; letter-spacing: .5px;
+            background: rgba(188,140,255,.2); border: 1px solid rgba(188,140,255,.5);
+            color: var(--purple); opacity: 0;
+            transition: opacity .5s;
+            pointer-events: none;
+        }
+        .cam-ai-badge.visible { opacity: 1; }
+
+        /* ── Flight HUD overlay ──────────────────────────────────────────────── */
+        .hud {
+            position: absolute; inset: 0; z-index: 2; pointer-events: none;
+            opacity: .92; transition: opacity .3s;
+        }
+        .hud.hidden { opacity: 0; }
+        .hud svg { width: 100%; height: 100%; display: block; }
+        #hudHorizon { transition: transform .12s linear; }
+        #hudRollPtr { transition: transform .12s linear; transform-origin: 200px 120px; }
+        .hud-toggle {
+            position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+            z-index: 3; pointer-events: auto; cursor: pointer;
+            background: rgba(0,0,0,.5); border: 1px solid var(--matrix-dim);
+            color: var(--matrix-text); border-radius: 4px;
+            font-family: 'Courier New', monospace; font-size: .55rem; font-weight: bold;
+            padding: 1px 8px; letter-spacing: 1px; opacity: .5; transition: opacity .2s;
+        }
+        .hud-toggle:hover { opacity: 1; }
+
+        /* ── UI polish — section labels ─────────────────────────────────────── */
+        .panel-section-label {
+            font-size: .52rem; color: var(--dim); text-transform: uppercase;
+            letter-spacing: 1px; padding: 4px 10px 2px;
+            border-bottom: 1px solid rgba(48,54,61,.5);
+        }
+
+        /* ── Config / threshold editor drawer ──────────────────────────────── */
+        #configPanel {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 320px; z-index: 800;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            transform: translateX(-100%);
+            transition: transform .3s ease;
+            box-shadow: 4px 0 20px rgba(0,0,0,.5);
+        }
+        #configPanel.open { transform: translateX(0); }
+        .cfg-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; border-bottom: 1px solid var(--border);
+            background: var(--bg); flex-shrink: 0;
+        }
+        .cfg-title { font-size: .8rem; font-weight: bold; color: var(--text); }
+        .cfg-close {
+            background: none; border: none; color: var(--dim);
+            font-size: 1rem; cursor: pointer; padding: 4px 8px;
+        }
+        .cfg-close:hover { color: var(--red); }
+        .cfg-body { flex: 1; overflow-y: auto; padding: 16px; }
+        .cfg-section { margin-bottom: 20px; }
+        .cfg-section-title {
+            font-size: .6rem; color: var(--dim); text-transform: uppercase;
+            letter-spacing: .8px; margin-bottom: 12px;
+            padding-bottom: 4px; border-bottom: 1px solid var(--border);
+        }
+        .cfg-row { margin-bottom: 14px; }
+        .cfg-label {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 5px;
+        }
+        .cfg-name { font-size: .68rem; color: var(--text); }
+        .cfg-value {
+            font-size: .72rem; font-weight: bold; font-variant-numeric: tabular-nums;
+            color: var(--teal); min-width: 40px; text-align: right;
+        }
+        .cfg-slider {
+            width: 100%; height: 4px; -webkit-appearance: none; appearance: none;
+            background: var(--border); border-radius: 2px; outline: none; cursor: pointer;
+        }
+        .cfg-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px;
+            border-radius: 50%; background: var(--teal); cursor: pointer;
+        }
+        .cfg-apply-btn {
+            width: 100%; padding: 8px; margin-top: 4px;
+            border-radius: 6px; border: 1px solid var(--teal);
+            background: rgba(121,192,255,.1); color: var(--teal);
+            font-family: 'Courier New', monospace; font-size: .7rem;
+            cursor: pointer; transition: all .15s; font-weight: bold;
+        }
+        .cfg-apply-btn:hover { background: rgba(121,192,255,.2); }
+        .cfg-reset-btn {
+            width: 100%; padding: 6px; margin-top: 6px;
+            border-radius: 6px; border: 1px solid var(--border);
+            background: var(--bg); color: var(--dim);
+            font-family: 'Courier New', monospace; font-size: .65rem;
+            cursor: pointer; transition: all .15s;
+        }
+        .cfg-reset-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+        .cfg-note {
+            font-size: .6rem; color: var(--dim); line-height: 1.5;
+            background: rgba(255,255,255,.03); border-radius: 4px;
+            padding: 8px 10px; margin-top: 8px;
+        }
+
+        /* ── Responsive ──────────────────────────────────────────────────────── */
+        @media (max-width: 800px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr auto;
+            }
+            .right-panel { grid-column: 1; grid-row: 2; border-right: none; }
+            .bottom-panel { grid-row: 3; }
+            .tele-strip { grid-template-columns: repeat(3,1fr); }
+        }
+
+        /* ── Compare Strip (educational redesign) ─────────────────────────── */
+        .compare-strip {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 1px; background: var(--border);
+            flex-shrink: 0;
+        }
+        .cmp-card {
+            background: var(--surface2); padding: 9px 11px;
+            display: flex; flex-direction: column; gap: 4px;
+            transition: background .2s, border-left .2s;
+            border-left: 3px solid transparent;
+        }
+        .cmp-card.active-card    { background: rgba(88,166,255,.07);  border-left-color: var(--blue); }
+        .cmp-card.active-agentic { background: rgba(188,140,255,.07); border-left-color: var(--purple); }
+        .cmp-hdr { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+        .cmp-badge {
+            font-size: .58rem; font-weight: bold; letter-spacing: .5px;
+            padding: 1px 7px; border-radius: 3px; border: 1px solid;
+        }
+        .rule-badge  { border-color: var(--blue);   color: var(--blue);   }
+        .agent-badge { border-color: var(--purple);  color: var(--purple); }
+        /* Exact condition that fired — shown as monospace code */
+        .cmp-condition {
+            font-family: 'Courier New', monospace;
+            font-size: .62rem; color: var(--teal);
+            background: rgba(121,192,255,.06);
+            border: 1px solid rgba(121,192,255,.15);
+            border-radius: 3px; padding: 3px 6px;
+            line-height: 1.4; word-break: break-all;
+        }
+        .cmp-action {
+            font-size: 1.3rem; font-weight: 900; letter-spacing: .06em;
+            color: var(--text); transition: color .25s;
+        }
+        .cmp-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .cmp-lat {
+            font-size: .62rem; font-variant-numeric: tabular-nums;
+            padding: 1px 5px; border-radius: 3px;
+            background: rgba(255,255,255,.05); color: var(--dim);
+        }
+        .cmp-cam {
+            font-size: .6rem; font-weight: bold; padding: 1px 6px;
+            border-radius: 3px;
+        }
+        .cam-yes { background: rgba(63,185,80,.15); color: var(--green); }
+        .cam-no  { background: rgba(248,81,73,.10); color: #f85149bb; }
+        .cmp-reason {
+            font-size: .63rem; color: #8d99a5; line-height: 1.45;
+            min-height: 2.6em; overflow: hidden;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        }
+        .cmp-conf-row { display: flex; align-items: center; gap: 4px; margin-top: 1px; }
+        .cmp-conf-lbl { font-size: .52rem; color: var(--dim); flex-shrink: 0; }
+        .cmp-conf-track {
+            flex: 1; height: 4px; background: rgba(255,255,255,.07);
+            border-radius: 2px; overflow: hidden;
+        }
+        .cmp-conf-bar { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
+        .rule-conf  { background: var(--blue);   }
+        .agent-conf { background: var(--purple); }
+        .cmp-conf-pct {
+            font-size: .56rem; color: var(--dim); min-width: 26px;
+            text-align: right; font-variant-numeric: tabular-nums;
+        }
+
+        /* ── Navigation Panel ───────────────────────────────────────────────── */
+        .nav-panel {
+            flex-shrink: 0;
+            background: #070d0f;
+            border-top: 1px solid var(--border);
+            padding: 10px 12px;
+        }
+        .nav-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .nav-title {
+            font-size: .68rem; font-weight: bold; letter-spacing: 1.5px;
+            color: var(--teal); text-transform: uppercase;
+        }
+        .nav-analyze-btn {
+            padding: 4px 12px; border-radius: 5px; border: 1px solid var(--teal);
+            background: rgba(121,192,255,.08); color: var(--teal);
+            font-family: 'Courier New', monospace; font-size: .68rem;
+            cursor: pointer; font-weight: bold; transition: all .15s;
+        }
+        .nav-analyze-btn:hover { background: rgba(121,192,255,.18); }
+        .nav-analyze-btn:disabled { opacity: .4; cursor: not-allowed; }
+        .nav-spinning { animation: nav-spin 1s linear infinite; }
+        @keyframes nav-spin { to { transform: rotate(360deg); } }
+
+        /* The two-column comparison inside nav panel */
+        .nav-comparison {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        }
+        .nav-col {
+            background: var(--surface2); border-radius: 5px; padding: 8px 10px;
+            display: flex; flex-direction: column; gap: 3px;
+        }
+        .nav-col-header {
+            font-size: .58rem; font-weight: bold; letter-spacing: .5px;
+            text-transform: uppercase; padding-bottom: 4px;
+            border-bottom: 1px solid var(--border); margin-bottom: 3px;
+        }
+        .nav-blind-header { color: #f8514988; }
+        .nav-ai-header    { color: var(--teal); }
+        .nav-blind-verdict {
+            font-family: 'Courier New', monospace;
+            font-size: .65rem; color: #f85149aa;
+            background: rgba(248,81,73,.07); padding: 4px 7px; border-radius: 3px;
+        }
+        .nav-ai-action {
+            font-size: 1.15rem; font-weight: 900; letter-spacing: .05em;
+            transition: color .3s;
+        }
+        .nav-ai-see {
+            font-size: .65rem; color: var(--teal); line-height: 1.4;
+            min-height: 2.4em;
+        }
+        .nav-ai-reason {
+            font-size: .6rem; color: var(--dim); line-height: 1.4; min-height: 1.8em;
+        }
+        .nav-ai-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .nav-conf-bar-wrap { height: 4px; background: rgba(255,255,255,.07); border-radius: 2px; overflow: hidden; flex: 1; }
+        .nav-conf-bar { height: 100%; background: var(--teal); border-radius: 2px; transition: width .3s; }
+        .nav-latency { font-size: .58rem; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+        /* Obstacle indicator on camera */
+        .cam-obstacle-overlay {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            pointer-events: none; opacity: 0;
+            transition: opacity .3s;
+        }
+        .cam-obstacle-overlay.visible { opacity: 1; }
+        .obs-arrow {
+            font-size: 3.5rem; line-height: 1;
+            filter: drop-shadow(0 0 8px currentColor);
+            animation: obs-pulse .7s ease-in-out infinite alternate;
+        }
+        .obs-label {
+            font-size: .78rem; font-weight: bold; letter-spacing: 2px;
+            margin-top: 6px;
+            text-shadow: 0 0 10px currentColor;
+        }
+        @keyframes obs-pulse { from{opacity:.7} to{opacity:1} }
+
+        /* ── Drone Visualization ───────────────────────────────────────────── */
+        .drone-viz-panel {
+            flex-shrink: 0; height: 180px;
+            background: radial-gradient(ellipse at center, #0a1a0a 0%, var(--matrix-bg) 100%);
+            border-bottom: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 6px;
+            padding: 6px; overflow: hidden; position: relative;
+        }
+        .drone-viz-panel::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(63,185,80,.04) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .dvz-title {
+            font-size: .58rem; color: var(--matrix-dim);
+            letter-spacing: 2px; text-transform: uppercase; flex-shrink: 0;
+        }
+        .drone-scene { perspective: 600px; flex-shrink: 0; }
+        .drone-3d {
+            position: relative; width: 190px; height: 190px;
+            transform-style: preserve-3d; transition: transform .15s ease-out;
+        }
+        .d-arm {
+            position: absolute; top: 50%; left: 50%;
+            width: 4px; height: 134px;
+            background: linear-gradient(to bottom, #58a6ff, #30363d);
+            border-radius: 2px;
+            transform-origin: top center;
+            box-shadow: 0 0 6px rgba(88,166,255,.2);
+        }
+        .d-arm-1 { transform: translate(-50%, 0) rotate(45deg); }
+        .d-arm-2 { transform: translate(-50%, 0) rotate(-45deg); }
+        .d-hub {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px; height: 40px; border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #79c0ff 0%, #0d2040 60%, #030d1a 100%);
+            border: 2px solid var(--blue);
+            box-shadow: 0 0 16px rgba(88,166,255,.7), inset 0 0 8px rgba(88,166,255,.2);
+            z-index: 3; transition: box-shadow .3s;
+        }
+        .d-hub::after {
+            content: '✦';
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px; color: rgba(88,166,255,.8);
+        }
+        .d-rotor-wrap { position: absolute; width: 48px; height: 48px; }
+        .rw-fl { top: 4px; left: 4px; }
+        .rw-fr { top: 4px; right: 4px; }
+        .rw-rl { bottom: 4px; left: 4px; }
+        .rw-rr { bottom: 4px; right: 4px; }
+        .d-rotor-ring {
+            position: absolute; inset: 0; border-radius: 50%;
+            border: 2px solid var(--green);
+            box-shadow: 0 0 8px rgba(63,185,80,.4);
+            opacity: .9; transition: border-color .3s, box-shadow .3s;
+        }
+        .d-rotor-blade {
+            position: absolute; width: 36px; height: 3px;
+            background: linear-gradient(90deg, rgba(63,185,80,.9), rgba(63,185,80,.4));
+            border-radius: 2px;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            animation: r-spin .2s linear infinite;
+            transition: background .3s;
+        }
+        .rb-b { animation: r-spin-b .2s linear infinite; }
+        @keyframes r-spin   { to { transform: translate(-50%,-50%) rotate(360deg); } }
+        @keyframes r-spin-b { 0% { transform: translate(-50%,-50%) rotate(90deg); } to { transform: translate(-50%,-50%) rotate(450deg); } }
+        @keyframes propSpin { to { transform: rotate(360deg); } }
+        [id^="propg-"] { animation-timing-function: linear; animation-iteration-count: infinite; }
+        .d-rotor-pct {
+            position: absolute; bottom: -16px; left: 50%;
+            transform: translateX(-50%);
+            font-size: .58rem; color: var(--green); white-space: nowrap;
+            font-variant-numeric: tabular-nums; font-weight: bold;
+        }
+        .dvz-status {
+            font-size: .7rem; font-weight: bold; letter-spacing: 3px;
+            color: var(--matrix-text);
+            text-shadow: 0 0 10px var(--matrix-text);
+            flex-shrink: 0; transition: color .3s, text-shadow .3s;
+        }
+
+        /* ── Demo & Accuracy section ────────────────────────────────────────── */
+        .demo-acc-wrap {
+            display: flex; flex-direction: column; gap: 6px;
+            border-right: 1px solid var(--border);
+            padding: 8px 14px; flex-shrink: 0; min-width: 220px;
+        }
+        .demo-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+        .demo-lbl, .acc-lbl {
+            font-size: .56rem; color: var(--dim); text-transform: uppercase;
+            letter-spacing: .5px; min-width: 40px; flex-shrink: 0;
+        }
+        .demo-btn {
+            padding: 3px 8px; border-radius: 4px; cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: .62rem; font-weight: bold;
+            background: var(--bg); border: 1px solid; transition: filter .15s;
+        }
+        .demo-btn:hover:not(:disabled) { filter: brightness(1.4); }
+        .demo-btn:disabled { opacity: .35; cursor: not-allowed; }
+        .acc-row { display: flex; align-items: center; gap: 5px; }
+        .acc-mode { font-size: .6rem; font-weight: bold; min-width: 40px; }
+        .acc-bar-wrap {
+            flex: 1; height: 5px; background: rgba(255,255,255,.07);
+            border-radius: 3px; overflow: hidden;
+        }
+        .acc-bar { height: 100%; border-radius: 3px; transition: width .5s; }
+        .rule-acc  { background: var(--blue);   }
+        .agent-acc { background: var(--purple); }
+        .acc-stat {
+            font-size: .62rem; font-variant-numeric: tabular-nums;
+            min-width: 70px; text-align: right; color: var(--text);
+        }
+
+        /* ── Agent "thinking" indicator ───────────────────────────────────── */
+        .thinking-overlay {
+            position: absolute; inset: 0; z-index: 4;
+            background: rgba(188,140,255,.07);
+            border: 1px solid rgba(188,140,255,.3);
+            border-radius: 0;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center; gap: 6px;
+        }
+        .thinking-overlay.active { display: flex; }
+        .thinking-text {
+            font-size: .7rem; color: var(--purple); font-weight: bold;
+            letter-spacing: 2px; text-transform: uppercase;
+        }
+        .thinking-dots span {
+            display: inline-block; width: 6px; height: 6px;
+            background: var(--purple); border-radius: 50%; margin: 0 2px;
+            animation: dot-bounce .9s ease-in-out infinite;
+        }
+        .thinking-dots span:nth-child(2) { animation-delay: .15s; }
+        .thinking-dots span:nth-child(3) { animation-delay: .3s; }
+        @keyframes dot-bounce { 0%,80%,100%{transform:scale(.6);opacity:.4} 40%{transform:scale(1.1);opacity:1} }
+        .thinking-timer {
+            font-size: 1.3rem; font-weight: 900; color: var(--purple);
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 10px var(--purple);
+        }
+
+        /* ── Latency race ───────────────────────────────────────────────────── */
+        .latency-race {
+            display: flex; flex-direction: column; gap: 4px;
+            padding: 8px 14px; border-right: 1px solid var(--border);
+            min-width: 200px; flex-shrink: 0;
+        }
+        .race-title {
+            font-size: .58rem; color: var(--dim); text-transform: uppercase;
+            letter-spacing: .5px; margin-bottom: 2px;
+        }
+        .race-row { display: flex; align-items: center; gap: 7px; }
+        .race-label { font-size: .62rem; font-weight: bold; min-width: 44px; }
+        .race-track {
+            flex: 1; height: 8px; background: rgba(255,255,255,.06);
+            border-radius: 4px; overflow: hidden;
+        }
+        .race-bar {
+            height: 100%; border-radius: 4px; width: 0%;
+            transition: width .1s linear;
+        }
+        .race-bar-rule   { background: var(--blue); }
+        .race-bar-agent  { background: var(--purple); }
+        .race-bar-hybrid { background: var(--green); }
+        .race-ms {
+            font-size: .65rem; min-width: 48px; text-align: right;
+            font-variant-numeric: tabular-nums; color: var(--dim);
+        }
+
+        /* ── Presentation flow overlay ──────────────────────────────────────── */
+        #presentationFlow {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0;
+            z-index: 500; background: rgba(13,17,23,.97);
+            border-top: 2px solid var(--blue);
+            padding: 14px 24px 16px;
+        }
+        #presentationFlow.visible { display: block; }
+        .pf-step-badge {
+            font-size: .6rem; color: var(--blue); font-weight: bold;
+            letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;
+        }
+        .pf-title {
+            font-size: 1rem; font-weight: 900; color: var(--text); margin-bottom: 6px;
+        }
+        .pf-say {
+            font-size: .78rem; color: var(--teal); line-height: 1.55;
+            border-left: 3px solid var(--teal); padding-left: 10px; margin-bottom: 10px;
+        }
+        .pf-action {
+            font-size: .68rem; color: var(--yellow); margin-bottom: 10px;
+        }
+        .pf-controls { display: flex; gap: 8px; align-items: center; }
+        .pf-btn {
+            padding: 6px 18px; border-radius: 6px; cursor: pointer;
+            font-family: 'Courier New', monospace; font-size: .72rem; font-weight: bold;
+            border: 1px solid; transition: all .15s;
+        }
+        .pf-next { background: var(--blue); color: #0d1117; border-color: var(--blue); }
+        .pf-prev { background: var(--bg); color: var(--dim); border-color: var(--border); }
+        .pf-close { background: var(--bg); color: var(--red); border-color: var(--red); margin-left: auto; }
+        .pf-progress {
+            display: flex; gap: 4px; align-items: center; margin-left: 12px;
+        }
+        .pf-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); transition: background .3s;
+        }
+        .pf-dot.done { background: var(--blue); }
+        .pf-dot.current { background: var(--green); }
+
+        /* ── Action flash overlay ──────────────────────────────────────────── */
+        #actionFlash {
+            position: fixed; inset: 0; z-index: 999;
+            pointer-events: none;
+            align-items: center; justify-content: center;
+        }
+        .flash-content {
+            font-size: 5rem; font-weight: 900;
+            letter-spacing: 8px; text-transform: uppercase;
+            text-shadow: 0 0 40px currentColor;
+            animation: flash-fade 1s ease-out forwards;
+        }
+        @keyframes flash-fade {
+            0%  { opacity: 0; transform: scale(.85); }
+            15% { opacity: 1; transform: scale(1.05); }
+            40% { opacity: .9; transform: scale(1); }
+            100%{ opacity: 0; transform: scale(1.1); }
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           MODERN POLISH v3 — additive layer (overrides earlier rules safely)
+           ══════════════════════════════════════════════════════════════════════ */
+
+        /* Ambient gradient wash behind everything for depth */
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background:
+                radial-gradient(900px 500px at 88% -8%, rgba(88,166,255,.10), transparent 60%),
+                radial-gradient(800px 520px at -8% 108%, rgba(188,140,255,.10), transparent 55%),
+                radial-gradient(600px 400px at 50% 120%, rgba(0,230,118,.05), transparent 60%);
+            animation: ambient-drift 18s ease-in-out infinite alternate;
+        }
+        @keyframes ambient-drift {
+            0%   { opacity: .65; transform: translateY(0) scale(1); }
+            100% { opacity: 1;   transform: translateY(-10px) scale(1.04); }
+        }
+
+        /* Animated gradient accent line under the header */
+        header {
+            position: relative;
+            background: linear-gradient(180deg, #161b22 0%, #12161d 100%);
+        }
+        header::after {
+            content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+            background: linear-gradient(90deg,
+                var(--blue), var(--purple), var(--green-bright), var(--blue));
+            background-size: 300% 100%;
+            animation: accent-slide 6s linear infinite;
+            opacity: .85;
+        }
+        @keyframes accent-slide { to { background-position: 300% 0; } }
+
+        /* Glassmorphism on floating drawers/panels */
+        #configPanel, #reportPanel {
+            background: rgba(22, 27, 34, .82);
+            -webkit-backdrop-filter: blur(14px) saturate(1.3);
+            backdrop-filter: blur(14px) saturate(1.3);
+        }
+        #presentationFlow {
+            -webkit-backdrop-filter: blur(16px) saturate(1.2);
+            backdrop-filter: blur(16px) saturate(1.2);
+        }
+
+        /* Mode buttons: glow when active */
+        .mode-btn.active-traditional { box-shadow: 0 0 16px rgba(88,166,255,.55), inset 0 0 0 1px rgba(255,255,255,.1); }
+        .mode-btn.active-agentic     { box-shadow: 0 0 16px rgba(188,140,255,.55), inset 0 0 0 1px rgba(255,255,255,.1); }
+        .mode-btn.active-hybrid      { box-shadow: 0 0 16px rgba(63,185,80,.55),  inset 0 0 0 1px rgba(255,255,255,.1); }
+        .mode-btn { transition: all .25s cubic-bezier(.4,0,.2,1); }
+
+        /* Cards lift subtly on hover for a tactile feel */
+        .cmp-card, .nav-col, .stat-mini, .motor-box {
+            transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+        .cmp-card:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+
+        /* Decision card: animated gradient ring when active hazard is high */
+        #decisionCard { position: relative; }
+        #decisionCard::before {
+            content: ""; position: absolute; inset: -1px; border-radius: 9px; z-index: -1;
+            background: linear-gradient(120deg, transparent, rgba(188,140,255,.0));
+            transition: background .4s;
+        }
+
+        /* Smooth number transitions on telemetry/motor values */
+        .tele-val, .motor-pct, .stat-mini .val, .race-ms { transition: color .3s ease; }
+
+        /* Buttons get a crisp focus/active feedback */
+        button { transition: filter .15s ease, transform .08s ease; }
+        button:active { transform: scale(.97); }
+
+        /* Scrollbars — modern thin everywhere */
+        * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+        /* Header buttons: unified pill hover lift */
+        header button:hover { transform: translateY(-1px); }
+
+        /* Live "REC"-style pulse dot for streaming state on the camera */
+        .camera-wrap::after {
+            content: "● CANLI"; position: absolute; top: 8px; right: 12px;
+            font-size: .58rem; font-weight: bold; letter-spacing: 1px;
+            color: var(--red); opacity: 0; transition: opacity .4s;
+            text-shadow: 0 0 8px var(--red); z-index: 3;
+        }
+        .camera-wrap.live-stream::after { opacity: 1; animation: rec-blink 1.4s infinite; }
+        @keyframes rec-blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           MODERN POLISH v4 — toasts, splash, help, command palette
+           ══════════════════════════════════════════════════════════════════════ */
+
+        /* ── Toast notifications ─────────────────────────────────────────────── */
+        #toastHost {
+            position: fixed; top: 64px; right: 18px; z-index: 950;
+            display: flex; flex-direction: column; gap: 10px;
+            pointer-events: none; max-width: 340px;
+        }
+        .toast {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 14px; border-radius: 10px;
+            background: rgba(22,27,34,.92);
+            -webkit-backdrop-filter: blur(12px) saturate(1.3);
+            backdrop-filter: blur(12px) saturate(1.3);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--blue);
+            box-shadow: 0 10px 30px rgba(0,0,0,.5);
+            color: var(--text); font-size: .74rem; line-height: 1.4;
+            transform: translateX(120%); opacity: 0;
+            animation: toast-in .35s cubic-bezier(.2,.9,.3,1.2) forwards;
+            pointer-events: auto;
+        }
+        .toast.removing { animation: toast-out .3s ease forwards; }
+        @keyframes toast-in  { to { transform: translateX(0); opacity: 1; } }
+        @keyframes toast-out { to { transform: translateX(120%); opacity: 0; } }
+        .toast-icon { font-size: 1.1rem; flex-shrink: 0; line-height: 1.2; }
+        .toast-body { flex: 1; min-width: 0; }
+        .toast-title { font-weight: bold; font-size: .76rem; margin-bottom: 2px; }
+        .toast-msg { color: var(--dim); font-size: .7rem; }
+        .toast.ok    { border-left-color: var(--green);  }
+        .toast.ok    .toast-title { color: var(--green); }
+        .toast.warn  { border-left-color: var(--yellow); }
+        .toast.warn  .toast-title { color: var(--yellow); }
+        .toast.err   { border-left-color: var(--red);    }
+        .toast.err   .toast-title { color: var(--red); }
+        .toast.info  { border-left-color: var(--blue);   }
+        .toast.info  .toast-title { color: var(--blue); }
+        .toast.agent { border-left-color: var(--purple); }
+        .toast.agent .toast-title { color: var(--purple); }
+
+        /* ── Boot splash ─────────────────────────────────────────────────────── */
+        #bootSplash {
+            position: fixed; inset: 0; z-index: 9999;
+            background: radial-gradient(1000px 600px at 50% 40%, #11202e, #06090f 75%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 22px;
+            transition: opacity .6s ease, visibility .6s;
+        }
+        #bootSplash.gone { opacity: 0; visibility: hidden; }
+        .boot-logo {
+            font-size: 3.4rem; letter-spacing: 3px;
+            animation: boot-float 2.5s ease-in-out infinite;
+        }
+        @keyframes boot-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+        .boot-title {
+            font-size: 1.15rem; font-weight: 900; letter-spacing: 3px;
+            background: linear-gradient(90deg, var(--blue), var(--purple), var(--green-bright));
+            background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: accent-slide 3s linear infinite;
+        }
+        .boot-sub { font-size: .72rem; color: var(--dim); letter-spacing: 1px; }
+        .boot-bar-track {
+            width: 280px; height: 4px; background: rgba(255,255,255,.08);
+            border-radius: 2px; overflow: hidden; margin-top: 6px;
+        }
+        .boot-bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--blue), var(--green-bright));
+            border-radius: 2px; transition: width .15s ease;
+        }
+        .boot-steps {
+            font-family: 'Courier New', monospace; font-size: .64rem;
+            color: var(--matrix-text); min-height: 1.2em; letter-spacing: .5px;
+        }
+
+        /* ── Help / shortcuts overlay ────────────────────────────────────────── */
+        #helpOverlay {
+            position: fixed; inset: 0; z-index: 960;
+            background: rgba(6,9,15,.82);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center;
+        }
+        #helpOverlay.open { display: flex; animation: fadein .25s ease; }
+        .help-card {
+            width: min(620px, 92vw); max-height: 86vh; overflow-y: auto;
+            background: rgba(22,27,34,.96); border: 1px solid var(--border);
+            border-radius: 14px; padding: 26px 30px;
+            box-shadow: 0 24px 70px rgba(0,0,0,.6);
+        }
+        .help-card h2 {
+            font-size: 1.05rem; margin-bottom: 4px; color: var(--text);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .help-card .help-sub { font-size: .72rem; color: var(--dim); margin-bottom: 18px; }
+        .help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+        .help-row { display: flex; align-items: center; gap: 10px; font-size: .74rem; }
+        .kbd {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 24px; height: 24px; padding: 0 8px;
+            background: var(--bg); border: 1px solid var(--border);
+            border-bottom-width: 2px; border-radius: 5px;
+            font-family: 'Courier New', monospace; font-size: .72rem;
+            color: var(--teal); flex-shrink: 0;
+        }
+        .help-row span { color: var(--dim); }
+        .help-section-title {
+            grid-column: 1 / -1; font-size: .6rem; color: var(--dim);
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-top: 10px; padding-bottom: 3px; border-bottom: 1px solid var(--border);
+        }
+        .help-close-hint { text-align: center; margin-top: 20px; font-size: .68rem; color: var(--dim); }
+
+        /* ── Keyboard hint chip (bottom-left) ────────────────────────────────── */
+        #kbdHint {
+            position: fixed; bottom: 12px; left: 14px; z-index: 700;
+            font-size: .62rem; color: var(--dim);
+            background: rgba(22,27,34,.8);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            border: 1px solid var(--border); border-radius: 20px;
+            padding: 5px 12px; opacity: .75; transition: opacity .2s; cursor: pointer;
+        }
+        #kbdHint:hover { opacity: 1; }
+        #kbdHint .kbd-mini {
+            display: inline-block; padding: 0 5px; border-radius: 3px;
+            background: var(--bg); border: 1px solid var(--border);
+            color: var(--teal); margin: 0 2px;
+        }
+
+        /* ── Staggered entrance for main panels (premium load feel) ──────────── */
+        .left-panel, .right-panel, .chart-panel, .bottom-panel {
+            animation: panel-enter .6s cubic-bezier(.2,.8,.3,1) both;
+        }
+        .left-panel   { animation-delay: .05s; }
+        .right-panel  { animation-delay: .15s; }
+        .chart-panel  { animation-delay: .25s; }
+        .bottom-panel { animation-delay: .35s; }
+        @keyframes panel-enter {
+            from { opacity: 0; transform: translateY(14px) scale(.995); }
+            to   { opacity: 1; transform: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════ Boot splash ══════════════ -->
+<div id="bootSplash">
+    <div class="boot-logo">🚁</div>
+    <div class="boot-title">DRONE MCP — AGENTIC AI KONTROL SİSTEMİ</div>
+    <div class="boot-sub">Akıllı Telefon → WebSocket → FastMCP → Pydantic-AI + Ollama</div>
+    <div class="boot-bar-track"><div class="boot-bar" id="bootBar"></div></div>
+    <div class="boot-steps" id="bootSteps">Sistem başlatılıyor…</div>
+</div>
+
+<!-- ══════════════ Toast host ══════════════ -->
+<div id="toastHost"></div>
+
+<!-- ══════════════ Help / shortcuts overlay ══════════════ -->
+<div id="helpOverlay" onclick="if(event.target===this)closeHelp()">
+    <div class="help-card">
+        <h2>⌨ Klavye Kısayolları & Demo Kontrolleri</h2>
+        <div class="help-sub">Sunum sırasında hızlı kontrol için. Kapatmak için <span class="kbd">Esc</span> veya <span class="kbd">?</span></div>
+        <div class="help-grid">
+            <div class="help-section-title">Mod Geçişi</div>
+            <div class="help-row"><span class="kbd">1</span><span>Geleneksel (IF/THEN)</span></div>
+            <div class="help-row"><span class="kbd">2</span><span>Agentik (LLM)</span></div>
+            <div class="help-row"><span class="kbd">3</span><span>Hibrit (Refleks+LLM)</span></div>
+            <div class="help-row"><span class="kbd">N</span><span>Navigasyon paneli aç/kapat</span></div>
+
+            <div class="help-section-title">Demo Senaryoları</div>
+            <div class="help-row"><span class="kbd">Q</span><span>Sakin uçuş</span></div>
+            <div class="help-row"><span class="kbd">W</span><span>Kademeli eğim</span></div>
+            <div class="help-row"><span class="kbd">E</span><span>Kritik tehlike</span></div>
+            <div class="help-row"><span class="kbd">R</span><span>Engel (kural kör)</span></div>
+            <div class="help-row"><span class="kbd">X</span><span>Senaryoyu durdur</span></div>
+            <div class="help-row"><span class="kbd">A</span><span>Görsel analiz (navigasyon)</span></div>
+
+            <div class="help-section-title">Paneller & Araçlar</div>
+            <div class="help-row"><span class="kbd">P</span><span>Sunum akışı</span></div>
+            <div class="help-row"><span class="kbd">B</span><span>Hızlı benchmark</span></div>
+            <div class="help-row"><span class="kbd">M</span><span>Oturum raporu</span></div>
+            <div class="help-row"><span class="kbd">T</span><span>Eşik düzenleyici</span></div>
+            <div class="help-row"><span class="kbd">V</span><span>Vision aç/kapat</span></div>
+            <div class="help-row"><span class="kbd">S</span><span>Ses uyarıları aç/kapat</span></div>
+            <div class="help-row"><span class="kbd">F</span><span>Tam ekran</span></div>
+            <div class="help-row"><span class="kbd">?</span><span>Bu yardım ekranı</span></div>
+        </div>
+        <div class="help-close-hint">İpucu: Sunumda <b style="color:var(--green)">P</b> tuşuyla adım adım rehberi başlat.</div>
+    </div>
+</div>
+
+<!-- ══════════════ Keyboard hint chip ══════════════ -->
+<div id="kbdHint" onclick="openHelp()">
+    <span class="kbd-mini">?</span> kısayollar &nbsp;·&nbsp; <span class="kbd-mini">P</span> sunum &nbsp;·&nbsp; <span class="kbd-mini">F</span> tam ekran
+</div>
+
+<!-- Config / Threshold Editor (slide-in from left) -->
+<div id="configPanel">
+    <div class="cfg-header">
+        <span class="cfg-title">⚙ CANLI EŞİK DÜZENLEYICI</span>
+        <button class="cfg-close" onclick="closeConfig()">✕</button>
+    </div>
+    <div class="cfg-body">
+        <div class="cfg-section">
+            <div class="cfg-section-title">📐 Tilt Eşikleri</div>
+            <div class="cfg-row">
+                <div class="cfg-label">
+                    <span class="cfg-name">⚠ Uyarı Eşiği</span>
+                    <span class="cfg-value" id="cfgWarnVal">15°</span>
+                </div>
+                <input type="range" class="cfg-slider" id="cfgWarn"
+                    min="5" max="25" step="1" value="15"
+                    oninput="document.getElementById('cfgWarnVal').textContent=this.value+'°'">
+            </div>
+            <div class="cfg-row">
+                <div class="cfg-label">
+                    <span class="cfg-name">🔴 Tehlike Eşiği</span>
+                    <span class="cfg-value" id="cfgDangerVal">30°</span>
+                </div>
+                <input type="range" class="cfg-slider" id="cfgDanger"
+                    min="15" max="50" step="1" value="30"
+                    oninput="document.getElementById('cfgDangerVal').textContent=this.value+'°'">
+            </div>
+        </div>
+        <div class="cfg-section">
+            <div class="cfg-section-title">⚡ Motor Hızları</div>
+            <div class="cfg-row">
+                <div class="cfg-label">
+                    <span class="cfg-name">Hover (varsayılan)</span>
+                    <span class="cfg-value" id="cfgMotDefVal">50%</span>
+                </div>
+                <input type="range" class="cfg-slider" id="cfgMotDef"
+                    min="30" max="70" step="1" value="50"
+                    oninput="document.getElementById('cfgMotDefVal').textContent=this.value+'%'">
+            </div>
+            <div class="cfg-row">
+                <div class="cfg-label">
+                    <span class="cfg-name">Stabilize hızı</span>
+                    <span class="cfg-value" id="cfgMotStabVal">75%</span>
+                </div>
+                <input type="range" class="cfg-slider" id="cfgMotStab"
+                    min="50" max="100" step="1" value="75"
+                    oninput="document.getElementById('cfgMotStabVal').textContent=this.value+'%'">
+            </div>
+            <div class="cfg-row">
+                <div class="cfg-label">
+                    <span class="cfg-name">Acil durum hızı</span>
+                    <span class="cfg-value" id="cfgMotEmrgVal">100%</span>
+                </div>
+                <input type="range" class="cfg-slider" id="cfgMotEmrg"
+                    min="75" max="100" step="1" value="100"
+                    oninput="document.getElementById('cfgMotEmrgVal').textContent=this.value+'%'">
+            </div>
+        </div>
+        <button class="cfg-apply-btn" onclick="applyConfig()">✓ Uygula — Sistem Anında Güncellenir</button>
+        <button class="cfg-reset-btn" onclick="resetConfig()">↺ Varsayılanlara Dön</button>
+        <div class="cfg-note">
+            💡 Eşikleri değiştirince kural motoru <b>anında</b> yeni değerleri kullanır.
+            AI agent da sistem istemi yenilenerek davranışını günceller.
+            Demo için: tehlike eşiğini 30°→20°'ye çek, farkı gözlemle.
+        </div>
+    </div>
+</div>
+
+<!-- Session Report Panel (slide-in from right) -->
+<div id="reportPanel">
+    <div class="report-header">
+        <span class="report-header-title">📊 OTURUM RAPORU</span>
+        <button class="report-close" onclick="closeReport()">✕</button>
+    </div>
+    <div class="report-body" id="reportBody">
+        <div style="color:var(--dim);font-size:.72rem;text-align:center;padding:40px 20px">
+            Rapor yüklemek için aşağıdaki butona bas.
+        </div>
+        <button class="report-refresh-btn" onclick="loadReport()">🔄 Raporu Yükle / Güncelle</button>
+    </div>
+</div>
+
+<!-- Presentation flow -->
+<div id="presentationFlow">
+    <div class="pf-step-badge" id="pfBadge">ADIM 1 / 5</div>
+    <div class="pf-title" id="pfTitle">Başlık</div>
+    <div class="pf-say" id="pfSay">Söylenecekler</div>
+    <div class="pf-action" id="pfAction"></div>
+    <div class="pf-controls">
+        <button class="pf-btn pf-prev" onclick="pfStep(-1)">◀ Geri</button>
+        <button class="pf-btn pf-next" onclick="pfStep(1)" id="pfNextBtn">İleri ▶</button>
+        <div class="pf-progress" id="pfProgress"></div>
+        <button class="pf-btn pf-close" onclick="closePF()">✕ Kapat</button>
+    </div>
+</div>
+
+<!-- Action flash overlay -->
+<div id="actionFlash" style="display:none">
+    <div class="flash-content" id="flashContent"></div>
+</div>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<header>
+    <div class="logo-group">
+        <span class="logo">&#x1F681; DRONE KP</span>
+        <div class="badge-row">
+            <div class="badge" id="srvBadge">
+                <div class="dot pulse" id="srvDot"></div>
+                <span id="srvTxt">Sunucu: Bağlanıyor</span>
+            </div>
+            <div class="badge err" id="droneBadge">
+                <div class="dot pulse" id="droneDot"></div>
+                <span id="droneTxt">Drone: Bağlı Değil</span>
+            </div>
+            <div class="badge info" id="logBadge">
+                <span id="logCountTxt">0 LOG</span>
+            </div>
+            <div class="badge" id="ollamaBadge" title="Yerel LLM (Ollama) durumu">
+                <div class="dot pulse" id="ollamaDot"></div>
+                <span id="ollamaTxt">Ollama: ?</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Config button -->
+    <button onclick="toggleConfig()" style="
+        padding:6px 14px; border-radius:6px; cursor:pointer;
+        font-family:'Courier New',monospace; font-size:.72rem; font-weight:bold;
+        background:rgba(121,192,255,.1); border:1px solid var(--teal);
+        color:var(--teal); letter-spacing:.5px; transition:filter .15s;
+    " onmouseover="this.style.filter='brightness(1.3)'"
+       onmouseout="this.style.filter=''">
+        ⚙ EŞİKLER
+    </button>
+
+    <!-- Export CSV button -->
+    <a href="/api/session/export.csv" download="drone_session.csv" style="
+        padding:6px 14px; border-radius:6px; cursor:pointer;
+        font-family:'Courier New',monospace; font-size:.72rem; font-weight:bold;
+        background:rgba(63,185,80,.1); border:1px solid var(--green);
+        color:var(--green); letter-spacing:.5px; text-decoration:none;
+        transition:filter .15s; display:inline-flex; align-items:center;
+    " onmouseover="this.style.filter='brightness(1.3)'"
+       onmouseout="this.style.filter=''">
+        ⬇ CSV
+    </a>
+
+    <!-- Audio toggle -->
+    <button onclick="toggleAudio()" id="audioBtn" style="
+        padding:6px 10px; border-radius:6px; cursor:pointer;
+        font-family:'Courier New',monospace; font-size:.72rem;
+        background:var(--bg); border:1px solid var(--border);
+        color:var(--dim); transition:all .15s;
+    " title="Ses uyarıları aç/kapat">🔇</button>
+
+    <!-- Benchmark button -->
+    <button onclick="runQuickBenchmark()" id="bncBtn" style="
+        padding:6px 14px; border-radius:6px; cursor:pointer;
+        font-family:'Courier New',monospace; font-size:.72rem; font-weight:bold;
+        background:rgba(227,179,65,.1); border:1px solid var(--yellow);
+        color:var(--yellow); letter-spacing:.5px; transition:filter .15s;
+    " onmouseover="this.style.filter='brightness(1.3)'"
+       onmouseout="this.style.filter=''">
+        ⚡ KIYASLA
+    </button>
+
+    <!-- Report button -->
+    <button onclick="toggleReport()" style="
+        padding:6px 14px; border-radius:6px; cursor:pointer;
+        font-family:'Courier New',monospace; font-size:.72rem; font-weight:bold;
+        background:rgba(88,166,255,.1); border:1px solid var(--blue);
+        color:var(--blue); letter-spacing:.5px; transition:filter .15s;
+    " onmouseover="this.style.filter='brightness(1.3)'"
+       onmouseout="this.style.filter=''">
+        📊 RAPOR
+    </button>
+
+    <!-- Presentation flow button -->
+    <button onclick="openPF()" style="
+        padding:6px 14px; border-radius:6px; cursor:pointer;
+        font-family:'Courier New',monospace; font-size:.72rem; font-weight:bold;
+        background:rgba(63,185,80,.12); border:1px solid var(--green);
+        color:var(--green); letter-spacing:.5px; transition:filter .15s;
+    " onmouseover="this.style.filter='brightness(1.3)'"
+       onmouseout="this.style.filter=''">
+        ▶ SUNUM AKIŞI
+    </button>
+
+    <!-- Model selector -->
+    <div class="model-selector" id="modelSelector">
+        <span class="model-lbl">MODEL</span>
+        <button class="model-btn active-model" id="mbLlava"
+            onclick="switchModel('llava:7b')">llava:7b</button>
+        <button class="model-btn" id="mbQwen7"
+            onclick="switchModel('qwen2.5vl:7b')">qwen2.5vl:7b</button>
+        <button class="model-btn" id="mbLlama32v"
+            onclick="switchModel('llama3.2-vision:latest')"
+            title="Meta llama3.2-vision — kurulu">llama3.2-v</button>
+        <button class="model-btn" id="mbQwen32"
+            onclick="switchModel('qwen2.5vl:32b')"
+            title="Çok güçlü ama yavaş — sunum sonrası dene">qwen:32b</button>
+        <span style="width:1px;height:18px;background:var(--border);margin:0 2px"></span>
+        <button class="model-btn active-model" id="visionBtn"
+            onclick="toggleVision()"
+            title="Kamera görüşü aç/kapat — GPU dolarsa kapat, agent metin-modunda hızlı çalışır">👁 GÖRÜŞ</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;padding:0 12px 0 0">
+        <span style="font-size:.55rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;white-space:nowrap">KİM SÜRÜYOR →</span>
+        <div class="mode-toggle" id="modeToggle" style="flex:1">
+            <button class="mode-btn active-traditional" id="btnTraditional" onclick="setMode('traditional')"
+                title="Sadece tilt açısına bakar — kamera yok, AI yok, &lt;1ms karar">
+                ⊞ GELENEKSEL
+            </button>
+            <button class="mode-btn" id="btnAgentic" onclick="setMode('agentic')"
+                title="Kamera + sensör → Ollama LLM → karar (~4 saniye)">
+                ★ AI AJAN
+            </button>
+            <button class="mode-btn" id="btnHybrid" onclick="setMode('hybrid')"
+                title="Kural hız için, LLM derinlik için — ikisi birlikte"
+                style="display:none">
+                ⚡ HİBRİT
+            </button>
+            <button class="mode-btn" id="btnNav" onclick="toggleNavPanel()"
+                style="border-left:1px solid var(--border)"
+                title="Kamerayla engel tespiti — kural kör, ajan görür">
+                🎯 ENGEL TESPİTİ
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ══════════════════ MAIN ══════════════════ -->
+<div class="main-grid">
+
+    <!-- ── Left: Camera + Telemetry ────────────────────────────────────────── -->
+    <div class="left-panel">
+        <div class="camera-wrap" id="camWrap">
+            <img id="camImg" alt="" style="display:none;">
+
+            <div class="cam-placeholder" id="camPlaceholder">
+                <div class="no-signal-text">NO SIGNAL</div>
+                <div style="font-size:.7rem;margin-top:8px;color:var(--matrix-dim)">
+                    Drone istemcisini başlatın
+                </div>
+            </div>
+
+            <!-- Demo camera — shown during scenarios when no real phone is connected -->
+            <div id="camDemo" style="display:none;position:absolute;inset:0;overflow:hidden">
+                <!-- Dynamic background — changes color with severity -->
+                <div id="demoBg" style="position:absolute;inset:0;
+                    background:linear-gradient(180deg,#071420 0%,#0d2a0d 70%,#0a1a06 100%);
+                    transition:background 0.6s"></div>
+
+                <!-- Ground/horizon lines -->
+                <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+                    <line x1="0" y1="200" x2="400" y2="200" stroke="rgba(63,185,80,.2)" stroke-width="1" stroke-dasharray="6 6"/>
+                    <!-- perspective grid -->
+                    <line x1="200" y1="200" x2="60"  y2="260" stroke="rgba(63,185,80,.08)" stroke-width="1"/>
+                    <line x1="200" y1="200" x2="140" y2="260" stroke="rgba(63,185,80,.08)" stroke-width="1"/>
+                    <line x1="200" y1="200" x2="260" y2="260" stroke="rgba(63,185,80,.08)" stroke-width="1"/>
+                    <line x1="200" y1="200" x2="340" y2="260" stroke="rgba(63,185,80,.08)" stroke-width="1"/>
+                    <line x1="0"   y1="220" x2="400" y2="220" stroke="rgba(63,185,80,.05)" stroke-width="1"/>
+                    <line x1="0"   y1="240" x2="400" y2="240" stroke="rgba(63,185,80,.04)" stroke-width="1"/>
+                </svg>
+
+                <!-- Drone front-view SVG (tilts with roll/pitch) -->
+                <svg id="demoDroneSvg" viewBox="0 0 400 260"
+                     style="position:absolute;inset:0;width:100%;height:100%;transition:transform .15s ease-out"
+                     preserveAspectRatio="xMidYMid meet">
+                    <g id="demoDroneBody" transform="translate(200 120)">
+                        <!-- Arms -->
+                        <line x1="-90" y1="0" x2="-44" y2="8"  stroke="#58a6ff" stroke-width="7" stroke-linecap="round"/>
+                        <line x1="90"  y1="0" x2="44"  y2="8"  stroke="#58a6ff" stroke-width="7" stroke-linecap="round"/>
+                        <!-- Arm glow -->
+                        <line x1="-90" y1="0" x2="-44" y2="8"  stroke="#58a6ff" stroke-width="16" stroke-linecap="round" opacity=".12"/>
+                        <line x1="90"  y1="0" x2="44"  y2="8"  stroke="#58a6ff" stroke-width="16" stroke-linecap="round" opacity=".12"/>
+                        <!-- Body -->
+                        <rect x="-44" y="-16" width="88" height="32" rx="10"
+                              fill="#0d2040" stroke="#58a6ff" stroke-width="2.5" id="dBody"/>
+                        <rect x="-28" y="-10" width="56" height="20" rx="6"
+                              fill="#060d1a" stroke="rgba(88,166,255,.25)" stroke-width="1"/>
+                        <!-- Center LED -->
+                        <circle cx="0" cy="0" r="7" fill="#3fb950" id="dLed"
+                                style="filter:drop-shadow(0 0 6px #3fb950)"/>
+
+                        <!-- Left motor -->
+                        <circle cx="-90" cy="0" r="22" fill="#040d04" stroke="#3fb950" stroke-width="2.5" id="dmring-l"/>
+                        <g id="dprop-l" style="transform-origin:-90px 0px;animation:propSpin .18s linear infinite">
+                            <ellipse cx="-90" cy="0" rx="19" ry="4" fill="rgba(63,185,80,.55)"/>
+                        </g>
+
+                        <!-- Right motor -->
+                        <circle cx="90" cy="0" r="22" fill="#040d04" stroke="#3fb950" stroke-width="2.5" id="dmring-r"/>
+                        <g id="dprop-r" style="transform-origin:90px 0px;animation:propSpin .21s linear infinite">
+                            <ellipse cx="90" cy="0" rx="19" ry="4" fill="rgba(63,185,80,.55)"/>
+                        </g>
+
+                        <!-- Obstacle (hidden by default, shown for obstacle scenario) -->
+                        <g id="demoObstacle" opacity="0" style="transition:opacity .4s">
+                            <rect x="130" y="-80" width="40" height="160" rx="4"
+                                  fill="rgba(248,81,73,.15)" stroke="#f85149" stroke-width="2"/>
+                            <text x="150" y="-90" text-anchor="middle" font-size="11"
+                                  fill="#f85149" font-family="Courier New,monospace">ENGEL</text>
+                        </g>
+                    </g>
+
+                    <!-- Tilt angle readout -->
+                    <text id="demoBigAngle" x="200" y="245" text-anchor="middle"
+                          font-size="20" font-weight="900" fill="#3fb950"
+                          font-family="Courier New,monospace"
+                          style="filter:drop-shadow(0 0 4px currentColor)">0.0°</text>
+                </svg>
+
+                <!-- Top-left: scenario name -->
+                <div id="demoScenLabel" style="position:absolute;top:10px;left:10px;z-index:5;
+                    background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+                    padding:4px 12px;border-radius:4px;border:1px solid rgba(255,255,255,.12);
+                    font-size:.68rem;font-weight:bold;color:rgba(255,255,255,.85);letter-spacing:.1em">
+                    SENARYO
+                </div>
+
+                <!-- Top-right: big status badge -->
+                <div id="demoStatusBadge" style="position:absolute;top:10px;right:10px;z-index:5;
+                    padding:6px 16px;border-radius:6px;font-size:.9rem;font-weight:900;
+                    letter-spacing:.1em;border:2px solid;transition:all .3s;
+                    background:rgba(63,185,80,.15);border-color:var(--green);color:var(--green)">
+                    HOVER
+                </div>
+
+                <div class="scanlines" style="opacity:.3"></div>
+            </div>
+
+            <!-- Kamerayla Analiz Et butonu — telefon bağlıyken görünür -->
+            <button id="camAnalyzeBtn" onclick="toggleNavPanel();runNavAnalysis();"
+                style="display:none;position:absolute;bottom:44px;right:10px;z-index:20;
+                    background:rgba(63,185,80,.15);border:1px solid var(--green);
+                    color:var(--green);border-radius:6px;padding:6px 14px;cursor:pointer;
+                    font-family:'Courier New',monospace;font-size:.7rem;font-weight:bold;
+                    letter-spacing:.08em;backdrop-filter:blur(4px);
+                    box-shadow:0 0 12px rgba(63,185,80,.3);transition:all .2s"
+                onmouseover="this.style.background='rgba(63,185,80,.28)'"
+                onmouseout="this.style.background='rgba(63,185,80,.15)'"
+                title="Kamerayı kullanarak engel tespiti yap">
+                📷 KAMERAYLA ANALİZ ET
+            </button>
+
+            <div class="scanlines"></div>
+
+            <!-- ══ Flight HUD overlay (artificial horizon + pitch ladder + heading) ══ -->
+            <div class="hud hidden" id="hud">
+                <button class="hud-toggle" id="hudToggle" onclick="toggleHud(event)" title="HUD aç/kapat">HUD</button>
+                <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" id="hudSvg">
+                    <!-- Sky/ground + pitch ladder group: rotates with roll, slides with pitch -->
+                    <g id="hudHorizon">
+                        <!-- large sky/ground rectangles so they fill on tilt -->
+                        <rect x="-400" y="-600" width="1200" height="750" fill="rgba(88,166,255,.07)"/>
+                        <rect x="-400" y="150" width="1200" height="750" fill="rgba(120,90,40,.10)"/>
+                        <!-- horizon line -->
+                        <line x1="-400" y1="150" x2="800" y2="150" stroke="#00e676" stroke-width="2" opacity=".85"/>
+                        <!-- pitch ladder -->
+                        <g stroke="#00e676" stroke-width="1.4" opacity=".7" font-family="Courier New" font-size="11" fill="#00e676">
+                            <line x1="150" y1="90" x2="250" y2="90"/><text x="256" y="94">+10</text><text x="116" y="94">+10</text>
+                            <line x1="160" y1="120" x2="240" y2="120"/>
+                            <line x1="160" y1="180" x2="240" y2="180"/>
+                            <line x1="150" y1="210" x2="250" y2="210"/><text x="256" y="214">-10</text><text x="120" y="214">-10</text>
+                            <line x1="170" y1="60" x2="230" y2="60"/><text x="236" y="64">+20</text>
+                            <line x1="170" y1="240" x2="230" y2="240"/><text x="236" y="244">-20</text>
+                        </g>
+                    </g>
+                    <!-- Roll arc + pointer (fixed) -->
+                    <g stroke="#00e676" stroke-width="1.4" fill="none" opacity=".8">
+                        <path d="M 140 40 A 80 80 0 0 1 260 40"/>
+                        <line x1="200" y1="34" x2="200" y2="22" stroke-width="2"/>
+                        <line x1="170" y1="40" x2="168" y2="31"/><line x1="230" y1="40" x2="232" y2="31"/>
+                    </g>
+                    <polygon id="hudRollPtr" points="200,40 195,50 205,50" fill="#00e676"/>
+                    <!-- Fixed aircraft reticle -->
+                    <g stroke="#ffea00" stroke-width="2.5" fill="none">
+                        <line x1="160" y1="150" x2="185" y2="150"/>
+                        <line x1="215" y1="150" x2="240" y2="150"/>
+                        <circle cx="200" cy="150" r="3" fill="#ffea00" stroke="none"/>
+                        <line x1="200" y1="150" x2="200" y2="158"/>
+                    </g>
+                    <!-- Heading tape (top) -->
+                    <rect x="150" y="6" width="100" height="16" fill="rgba(0,0,0,.45)" rx="2"/>
+                    <text id="hudHeading" x="200" y="18" fill="#00e676" font-family="Courier New" font-size="12" font-weight="bold" text-anchor="middle">HDG 000°</text>
+                    <!-- Tilt readout (bottom-left of hud) -->
+                    <text id="hudTilt" x="14" y="288" fill="#00e676" font-family="Courier New" font-size="12" font-weight="bold">TILT 0.0°</text>
+                    <text id="hudMode" x="386" y="288" fill="#79c0ff" font-family="Courier New" font-size="11" font-weight="bold" text-anchor="end">GELENEKSEL</text>
+                </svg>
+            </div>
+
+            <!-- AI camera usage badge -->
+            <div class="cam-ai-badge" id="camAiBadge">★ AI KAMERA OKUDU</div>
+
+            <!-- Camera toggle button — top-left, always visible -->
+            <button id="camToggleBtn" onclick="toggleCameraDisplay()"
+                style="position:absolute;top:8px;left:8px;z-index:25;
+                    padding:4px 10px;border-radius:4px;cursor:pointer;
+                    font-family:'Courier New',monospace;font-size:.62rem;font-weight:bold;
+                    letter-spacing:.06em;border:1px solid rgba(255,255,255,.25);
+                    background:rgba(0,0,0,.55);color:rgba(255,255,255,.6);
+                    backdrop-filter:blur(4px);transition:all .2s">
+                📷 KAMERA AÇ
+            </button>
+
+            <div class="bkt tl" style="top:36px"></div>
+            <div class="bkt tr"></div>
+            <div class="bkt bl"></div>
+            <div class="bkt br"></div>
+
+            <div class="cam-overlay-info">
+                <span id="camFps">-- FPS</span>
+                <span id="camRes">--×--</span>
+            </div>
+
+            <!-- Navigation direction overlay — shown when obstacle detected -->
+            <div class="cam-obstacle-overlay" id="obsOverlay">
+                <div class="obs-arrow" id="obsArrow">⬆</div>
+                <div class="obs-label" id="obsLabel">MOVE FORWARD</div>
+            </div>
+        </div>
+
+        <!-- Tilt gauge — replaces confusing 6-number strip -->
+        <div id="tiltGauge" style="padding:12px 16px;background:var(--surface2);border-top:1px solid var(--border);flex-shrink:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span style="font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">📐 Drone Eğim Açısı</span>
+                <span id="t-tilt-status" style="font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--green)">DENGEDE</span>
+            </div>
+            <!-- Bar -->
+            <div style="position:relative;height:18px;background:rgba(255,255,255,.06);border-radius:9px;overflow:hidden;margin-bottom:6px">
+                <!-- color zones -->
+                <div style="position:absolute;left:0;top:0;bottom:0;width:33%;background:rgba(63,185,80,.15);border-radius:9px 0 0 9px"></div>
+                <div style="position:absolute;left:33%;top:0;bottom:0;width:34%;background:rgba(227,179,65,.12)"></div>
+                <div style="position:absolute;left:67%;top:0;bottom:0;width:33%;background:rgba(248,81,73,.12);border-radius:0 9px 9px 0"></div>
+                <!-- fill -->
+                <div id="tgFill" style="position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:9px;
+                    background:var(--green);transition:width .3s,background .3s;opacity:.85"></div>
+                <!-- angle label on fill -->
+                <div id="t-tilt" style="position:absolute;right:8px;top:0;bottom:0;display:flex;align-items:center;
+                    font-size:.82rem;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;
+                    text-shadow:0 0 6px rgba(0,0,0,.8)">--°</div>
+            </div>
+            <!-- Scale labels -->
+            <div style="display:flex;justify-content:space-between;font-size:.55rem;color:var(--dim);padding:0 2px">
+                <span style="color:var(--green)">0° Normal</span>
+                <span style="color:var(--yellow)">15° Uyarı</span>
+                <span style="color:var(--red)">30° Tehlike</span>
+                <span style="color:var(--dim)">45°</span>
+            </div>
+        </div>
+        <!-- hidden tele values for JS compat -->
+        <span id="t-ax" style="display:none"></span><span id="t-ay" style="display:none"></span>
+        <span id="t-az" style="display:none"></span><span id="t-al" style="display:none"></span>
+        <span id="t-be" style="display:none"></span><span id="t-ga" style="display:none"></span>
+
+        <!-- ── Navigation Panel — "AI sees, rule is blind" ───────────────────── -->
+        <div class="nav-panel" id="navPanel" style="display:none">
+            <div class="nav-header">
+                <span class="nav-title">🎯 ENGEL TESPİTİ — Kamera analizi</span>
+                <button class="nav-analyze-btn" id="navBtn" onclick="runNavAnalysis()">
+                    📷 Analiz Et
+                </button>
+            </div>
+            <div class="nav-comparison">
+                <!-- What the blind rule says -->
+                <div class="nav-col">
+                    <div class="nav-col-header nav-blind-header">⊞ KURAL (KAMERASIZ)</div>
+                    <div class="nav-blind-verdict" id="navRuleBlind">
+                        tilt(--°) → HOVER — kamera görmüyor
+                    </div>
+                    <div style="font-size:.58rem;color:#f8514988;margin-top:4px;line-height:1.4">
+                        ⚠ Drone düz olduğu için kural "tehlike yok" der.<br>
+                        Önündeki engeli GÖREMİYOR.
+                    </div>
+                </div>
+                <!-- What the AI sees -->
+                <div class="nav-col">
+                    <div class="nav-col-header nav-ai-header">★ AI (KAMERAYLA)</div>
+                    <div class="nav-ai-action" id="navAiAction">—</div>
+                    <div class="nav-ai-see" id="navAiSee">Analiz bekleniyor…</div>
+                    <div class="nav-ai-reason" id="navAiReason"></div>
+                    <div class="nav-ai-meta">
+                        <div class="nav-conf-bar-wrap"><div class="nav-conf-bar" id="navConfBar" style="width:0%"></div></div>
+                        <span class="nav-latency" id="navLatency">-- ms</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Right: Decisions + Drone + Log ──────────────────────────────────── -->
+    <div class="right-panel">
+
+        <!-- ── Nav Result Panel — shown instead of compare strip in nav mode ── -->
+        <div id="navResultPanel" style="display:none;flex:1;flex-direction:column;
+            align-items:center;justify-content:center;gap:16px;
+            background:linear-gradient(180deg,#070f0f 0%,#040d0d 100%);
+            border-bottom:1px solid var(--border);min-height:0;padding:20px 16px">
+            <div style="font-size:.6rem;letter-spacing:.2em;color:var(--teal);text-transform:uppercase;font-weight:bold">
+                🎯 ENGEL TESPİT MODU
+            </div>
+            <div id="navResAction" style="font-size:3rem;font-weight:900;color:var(--teal);
+                letter-spacing:.04em;line-height:1;transition:color .25s">—</div>
+            <div id="navResDetail" style="font-size:.9rem;color:#9da7b3;text-align:center;
+                max-width:220px;line-height:1.6">Analiz Et'e basın</div>
+            <div id="navResRule" style="font-size:.65rem;color:rgba(248,81,73,.6);
+                background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.2);
+                border-radius:4px;padding:4px 10px;text-align:center">
+                ⊞ Kural (kör): —
+            </div>
+            <button onclick="runNavAnalysis()" id="navResBtn"
+                style="padding:8px 22px;border-radius:6px;border:2px solid var(--teal);
+                background:rgba(121,192,255,.1);color:var(--teal);cursor:pointer;
+                font-family:'Courier New',monospace;font-size:.78rem;font-weight:bold;
+                letter-spacing:.08em;transition:all .15s"
+                onmouseover="this.style.background='rgba(121,192,255,.2)'"
+                onmouseout="this.style.background='rgba(121,192,255,.1)'">
+                📷 ANALİZ ET
+            </button>
+        </div>
+
+        <!-- ── Diverge Banner (moved here, prominent) ──────────────────────── -->
+        <div id="divergeBanner" style="display:none;align-items:center;justify-content:center;gap:8px;
+            padding:8px 14px;background:linear-gradient(90deg,rgba(188,140,255,.25),rgba(248,81,73,.25));
+            border-bottom:2px solid var(--purple);flex-shrink:0">
+            <span style="font-size:.8rem;font-weight:900;letter-spacing:.1em;color:#fff">⚡ KARARLAR FARKLI!</span>
+            <span id="divergeDetail" style="font-size:.72rem;color:rgba(255,255,255,.75);font-weight:normal"></span>
+        </div>
+
+        <!-- ── Big Decision Cards ───────────────────────────────────────────── -->
+        <div class="compare-strip" style="flex:1;min-height:0;position:relative">
+            <!-- NAV MODE overlay — shown when obstacle-only mode is active -->
+            <div id="navModeOverlay" style="display:none;position:absolute;inset:0;z-index:10;
+                background:rgba(7,14,15,.92);backdrop-filter:blur(3px);
+                flex-direction:column;align-items:center;justify-content:center;gap:12px">
+                <div style="font-size:.65rem;letter-spacing:.18em;color:var(--teal);font-weight:bold">
+                    🎯 ENGEL TESPİT MODU AKTİF
+                </div>
+                <div id="navOverlayAction" style="font-size:2.4rem;font-weight:900;color:var(--teal);letter-spacing:.04em">—</div>
+                <div id="navOverlayDetail" style="font-size:.8rem;color:#9da7b3;text-align:center;max-width:180px;line-height:1.5">Analiz Et'e basın</div>
+                <div style="font-size:.6rem;color:var(--dim);margin-top:4px">Stabilizasyon arka planda çalışıyor</div>
+            </div>
+            <!-- GELENEKSEL -->
+            <div class="cmp-card" id="cmpRule"
+                 style="padding:16px 14px;border-left:4px solid var(--blue)">
+                <div style="font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;
+                    color:var(--blue);margin-bottom:6px;font-weight:bold">⊞ KURAL MOTORU</div>
+                <div style="font-size:.62rem;color:var(--dim);margin-bottom:12px">
+                    📷 Kamerasız &nbsp;·&nbsp; ⚡ &lt;1ms
+                </div>
+                <div id="cmpRuleAction"
+                     style="font-size:2.2rem;font-weight:900;letter-spacing:.04em;
+                     color:var(--green);transition:color .25s;line-height:1;margin-bottom:10px">—</div>
+                <div id="cmpRuleReason"
+                     style="font-size:.75rem;color:#9da7b3;line-height:1.5">Bekleniyor…</div>
+                <div id="cmpRuleCondition"
+                     style="font-size:.62rem;color:var(--dim);margin-top:6px;
+                     font-family:'Courier New',monospace">—</div>
+            </div>
+            <!-- AI AJAN -->
+            <div class="cmp-card" id="cmpAgent"
+                 style="padding:16px 14px;border-left:4px solid var(--purple);position:relative;overflow:hidden;display:flex;flex-direction:column">
+                <div style="font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;
+                    color:var(--purple);margin-bottom:6px;font-weight:bold">★ YAPAY ZEKA AJAN</div>
+                <div style="font-size:.62rem;color:var(--dim);margin-bottom:12px">
+                    📷 Kamera+Sensör &nbsp;·&nbsp; ⏱ <span id="cmpAgentLat">--ms</span>
+                </div>
+                <div id="cmpAgentAction"
+                     style="font-size:2.2rem;font-weight:900;letter-spacing:.04em;
+                     color:var(--green);transition:color .25s;line-height:1;margin-bottom:10px">—</div>
+                <div id="cmpAgentReason"
+                     style="font-size:.82rem;color:#c8d0da;line-height:1.65;
+                     overflow-y:auto;flex:1;min-height:60px;
+                     scrollbar-width:thin;
+                     scrollbar-color:rgba(188,140,255,.4) transparent;
+                     padding-right:4px">Bekleniyor…</div>
+                <div id="cmpAgentCondition"
+                     style="font-size:.64rem;color:var(--purple);margin-top:8px;
+                     font-family:'Courier New',monospace;opacity:.85;flex-shrink:0">—</div>
+                <!-- hidden compat spans -->
+                <span id="cmpRuleLat" style="display:none"></span>
+                <span id="cmpRuleConf" style="display:none"></span>
+                <span id="cmpRuleConfPct" style="display:none"></span>
+                <span id="cmpAgentCam" style="display:none"></span>
+                <span id="cmpAgentConf" style="display:none"></span>
+                <span id="cmpAgentConfPct" style="display:none"></span>
+                <div class="thinking-overlay" id="thinkingOverlay">
+                    <div class="thinking-text">AI ŞU AN DÜŞÜNÜYOR</div>
+                    <div class="thinking-dots"><span></span><span></span><span></span></div>
+                    <div class="thinking-timer" id="thinkingTimer">0.0s</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Drone Visualization ─────────────────────────────────────────── -->
+        <div class="drone-viz-panel">
+            <div class="dvz-title">⬡ DRÖN — CANLI EĞİM GÖRSELİ</div>
+            <div class="drone-scene">
+                <!-- SVG drone: top-down quadcopter, tilts with CSS 3D transform -->
+                <svg id="drone3d" viewBox="0 0 200 200" width="196" height="196"
+                     style="transform-style:preserve-3d;transition:transform .15s ease-out;overflow:visible">
+                    <defs>
+                        <pattern id="dgrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(88,166,255,.05)" stroke-width="0.5"/>
+                        </pattern>
+                        <radialGradient id="hubGrad" cx="40%" cy="35%">
+                            <stop offset="0%" stop-color="#79c0ff"/>
+                            <stop offset="60%" stop-color="#0d2040"/>
+                            <stop offset="100%" stop-color="#030d1a"/>
+                        </radialGradient>
+                    </defs>
+                    <!-- Background grid -->
+                    <rect width="200" height="200" fill="url(#dgrid)" rx="8"/>
+                    <!-- Arm glow -->
+                    <line x1="38" y1="38" x2="162" y2="162" stroke="#58a6ff" stroke-width="14" stroke-linecap="round" opacity=".1"/>
+                    <line x1="162" y1="38" x2="38" y2="162" stroke="#58a6ff" stroke-width="14" stroke-linecap="round" opacity=".1"/>
+                    <!-- Arms -->
+                    <line x1="38" y1="38" x2="162" y2="162" stroke="#58a6ff" stroke-width="5" stroke-linecap="round" opacity=".85"/>
+                    <line x1="162" y1="38" x2="38" y2="162" stroke="#58a6ff" stroke-width="5" stroke-linecap="round" opacity=".85"/>
+
+                    <!-- Motor FL (ön-sol) -->
+                    <circle cx="38" cy="38" r="25" fill="#060e06" stroke="#3fb950" stroke-width="2.5" id="mring-fl"/>
+                    <g id="propg-fl" style="transform-origin:38px 38px;animation:propSpin .2s linear infinite">
+                        <line x1="18" y1="38" x2="58" y2="38" stroke="rgba(63,185,80,.8)" stroke-width="3.5" stroke-linecap="round"/>
+                        <line x1="38" y1="18" x2="38" y2="58" stroke="rgba(63,185,80,.55)" stroke-width="2.5" stroke-linecap="round"/>
+                    </g>
+                    <text x="38" y="42" text-anchor="middle" font-size="9" font-weight="bold" fill="#3fb950" font-family="Courier New,monospace" pointer-events="none">ÖS</text>
+                    <text id="mpct-fl" x="38" y="52" text-anchor="middle" font-size="7.5" fill="rgba(63,185,80,.65)" font-family="Courier New,monospace">50%</text>
+
+                    <!-- Motor FR (ön-sağ) -->
+                    <circle cx="162" cy="38" r="25" fill="#060e06" stroke="#3fb950" stroke-width="2.5" id="mring-fr"/>
+                    <g id="propg-fr" style="transform-origin:162px 38px;animation:propSpin .23s linear infinite">
+                        <line x1="142" y1="38" x2="182" y2="38" stroke="rgba(63,185,80,.8)" stroke-width="3.5" stroke-linecap="round"/>
+                        <line x1="162" y1="18" x2="162" y2="58" stroke="rgba(63,185,80,.55)" stroke-width="2.5" stroke-linecap="round"/>
+                    </g>
+                    <text x="162" y="42" text-anchor="middle" font-size="9" font-weight="bold" fill="#3fb950" font-family="Courier New,monospace" pointer-events="none">ÖS</text>
+                    <text x="162" y="28" text-anchor="middle" font-size="8" fill="rgba(88,166,255,.5)" font-family="Courier New,monospace">ÖN-SAĞ</text>
+                    <text id="mpct-fr" x="162" y="52" text-anchor="middle" font-size="7.5" fill="rgba(63,185,80,.65)" font-family="Courier New,monospace">50%</text>
+
+                    <!-- Motor RL (arka-sol) -->
+                    <circle cx="38" cy="162" r="25" fill="#060e06" stroke="#3fb950" stroke-width="2.5" id="mring-rl"/>
+                    <g id="propg-rl" style="transform-origin:38px 162px;animation:propSpin .21s linear infinite">
+                        <line x1="18" y1="162" x2="58" y2="162" stroke="rgba(63,185,80,.8)" stroke-width="3.5" stroke-linecap="round"/>
+                        <line x1="38" y1="142" x2="38" y2="182" stroke="rgba(63,185,80,.55)" stroke-width="2.5" stroke-linecap="round"/>
+                    </g>
+                    <text id="mpct-rl" x="38" y="178" text-anchor="middle" font-size="7.5" fill="rgba(63,185,80,.65)" font-family="Courier New,monospace">50%</text>
+
+                    <!-- Motor RR (arka-sağ) -->
+                    <circle cx="162" cy="162" r="25" fill="#060e06" stroke="#3fb950" stroke-width="2.5" id="mring-rr"/>
+                    <g id="propg-rr" style="transform-origin:162px 162px;animation:propSpin .22s linear infinite">
+                        <line x1="142" y1="162" x2="182" y2="162" stroke="rgba(63,185,80,.8)" stroke-width="3.5" stroke-linecap="round"/>
+                        <line x1="162" y1="142" x2="162" y2="182" stroke="rgba(63,185,80,.55)" stroke-width="2.5" stroke-linecap="round"/>
+                    </g>
+                    <text id="mpct-rr" x="162" y="178" text-anchor="middle" font-size="7.5" fill="rgba(63,185,80,.65)" font-family="Courier New,monospace">50%</text>
+
+                    <!-- Yön oku (ÖN) -->
+                    <polygon points="100,8 106,22 100,18 94,22" fill="#58a6ff" opacity=".6"/>
+                    <text x="100" y="6" text-anchor="middle" font-size="8" fill="rgba(88,166,255,.5)" font-family="Courier New,monospace">ÖN</text>
+
+                    <!-- Center body -->
+                    <circle cx="100" cy="100" r="26" fill="url(#hubGrad)" stroke="#58a6ff" stroke-width="2.5" id="dHub"/>
+                    <circle cx="100" cy="100" r="16" fill="#060d1a" stroke="rgba(88,166,255,.25)" stroke-width="1"/>
+                    <!-- Tilt angle -->
+                    <text id="svgTiltVal" x="100" y="105" text-anchor="middle" font-size="12" font-weight="bold"
+                          fill="#79c0ff" font-family="Courier New,monospace">0.0°</text>
+                </svg>
+            </div>
+            <div class="dvz-status" id="dvzStatus">BEKLENIYOR</div>
+        </div>
+
+        <!-- ── Agent Decision Card — live explainability (agentic AI'ın vitrini) ── -->
+        <!-- hidden compat fields for decisionCard JS -->
+        <span id="dcMode" style="display:none"></span>
+        <span id="dcAction" style="display:none"></span>
+        <span id="dcHazard" style="display:none"></span>
+        <span id="dcReason" style="display:none"></span>
+        <span id="dcConfBar" style="display:none"></span>
+        <span id="dcConf" style="display:none"></span>
+        <span id="dcLatency" style="display:none"></span>
+        <span id="dcVision" style="display:none"></span>
+        <div class="terminal-header">
+            <span class="terminal-title">&#x25B6; KARAR LOGU</span>
+            <div class="terminal-controls" style="display:flex;gap:5px;align-items:center">
+                <input type="text" id="logSearch" placeholder="Ara…"
+                    oninput="filterLog(this.value)"
+                    style="background:var(--matrix-bg);border:1px solid var(--matrix-dim);
+                    color:var(--matrix-text);font-family:'Courier New',monospace;
+                    font-size:.6rem;padding:2px 7px;border-radius:3px;width:90px;outline:none">
+                <button class="term-btn" onclick="clearLog()">CLR</button>
+                <button class="term-btn" onclick="toggleAutoScroll()" id="asBtn">AUTO ↓</button>
+            </div>
+        </div>
+        <div class="terminal-body" id="terminal">
+            <div class="log-line INFO">
+                <span class="log-ts">--:--:--</span>
+                <span class="log-src">[INIT]</span>
+                <span class="log-msg">Sistem başlatıldı. WebSocket bağlantısı kuruluyor…<span class="cursor"></span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Chart: Live tilt history ────────────────────────────────────────── -->
+    <div class="chart-panel">
+        <div class="chart-header">
+            <span class="chart-title">📈 CANLI EĞİM GEÇMİŞİ — Son 60 Saniye</span>
+            <div class="chart-legend">
+                <span style="color:var(--teal)">— Eğim açısı</span>
+                <span style="color:var(--blue)">● Kural kararı</span>
+                <span style="color:var(--purple)">● Agent kararı</span>
+                <span style="color:rgba(227,179,65,.6)">- - 15° uyarı</span>
+                <span style="color:rgba(248,81,73,.6)">- - 30° tehlike</span>
+            </div>
+        </div>
+        <canvas id="tiltChart"></canvas>
+    </div>
+
+    <!-- ── Bottom: Motors ────────────────────────────────────────────────────── -->
+    <div class="bottom-panel">
+        <!-- Demo scenarios + accuracy -->
+        <div class="demo-acc-wrap">
+            <div class="demo-row" style="flex-wrap:wrap;gap:6px">
+                <span class="demo-lbl" style="font-size:.6rem;font-weight:bold;color:var(--text)">DEMO SENARYOLARI</span>
+                <button class="demo-btn" onclick="startScenario('calm')"
+                    style="border-color:var(--green);color:var(--green);padding:5px 12px;font-size:.72rem"
+                    title="Tilt 0–3° — sakin uçuş, her zaman HOVER">
+                    🟢 Sakin <span style="opacity:.6;font-size:.63rem">(0–3°)</span></button>
+                <button class="demo-btn" onclick="startScenario('gradual_tilt')"
+                    style="border-color:var(--yellow);color:var(--yellow);padding:5px 12px;font-size:.72rem"
+                    title="0° → 45° yavaş artış → geri 0° — HOVER → STABİLİZE → HOVER">
+                    🟡 Eğim <span style="opacity:.6;font-size:.63rem">(0→45°)</span></button>
+                <button class="demo-btn" onclick="startScenario('critical')"
+                    style="border-color:var(--red);color:var(--red);padding:5px 12px;font-size:.72rem"
+                    title="0° → hızlı 43° kriz → geri 0° — HOVER → ACİL → HOVER">
+                    🔴 Kritik <span style="opacity:.6;font-size:.63rem">(0→43°)</span></button>
+                <button class="demo-btn" onclick="startScenario('shake')"
+                    style="border-color:#e07040;color:#e07040;padding:5px 10px;font-size:.68rem"
+                    title="Ani sarsıntılar ±38° — kaotik stabilizasyon testi">🌀 Sarsılma</button>
+                <button class="demo-btn" onclick="startScenario('turbulence')"
+                    style="border-color:#9d6cd1;color:#9d6cd1;padding:5px 10px;font-size:.68rem"
+                    title="Rastgele türbülans ±26° — hızlı karar alma testi">🌪 Türbülans</button>
+                <button class="demo-btn" onclick="startScenario('wind_gust')"
+                    style="border-color:#5cc4e4;color:#5cc4e4;padding:5px 10px;font-size:.68rem"
+                    title="Aniden 40° rüzgar → tam toparlanma 0° — hız karşılaştırması">💨 Rüzgar</button>
+                <button class="demo-btn" onclick="startScenario('zigzag')"
+                    style="border-color:#79c0ff;color:#79c0ff;padding:5px 10px;font-size:.68rem"
+                    title="Sol-sağ yalpalama ±22° — dönüş kararları">↔ Zikzak</button>
+                <button class="demo-btn" onclick="startScenario('ai_advantage')"
+                    style="border-color:#f0a500;color:#f0a500;padding:5px 12px;font-size:.72rem;font-weight:bold"
+                    title="0→13° (eşik altı!) — Kural: HOVER (görmez), AI: STABILIZE (trendi görür)">
+                    🧠 AI <span style="opacity:.6;font-size:.63rem">(0→13°)</span></button>
+                <button class="demo-btn" id="demoStopBtn" onclick="stopScenario()"
+                    style="border-color:var(--border);color:var(--dim);padding:5px 12px;font-size:.72rem" disabled>⏹ Durdur</button>
+            </div>
+            <div class="acc-row">
+                <span class="acc-lbl">DOĞR.</span>
+                <span class="acc-mode" style="color:var(--blue)">KURAL</span>
+                <div class="acc-bar-wrap"><div class="acc-bar rule-acc" id="accRuleBar" style="width:0%"></div></div>
+                <span class="acc-stat" id="accRuleStat">-- (0/0)</span>
+            </div>
+            <div class="acc-row">
+                <span class="acc-lbl"></span>
+                <span class="acc-mode" style="color:var(--purple)">AGENT</span>
+                <div class="acc-bar-wrap"><div class="acc-bar agent-acc" id="accAgentBar" style="width:0%"></div></div>
+                <span class="acc-stat" id="accAgentStat">-- (0/0)</span>
+            </div>
+        </div>
+
+        <div class="motor-section">
+            <div class="motor-label">Motorlar</div>
+            <div class="motor-grid">
+                <div class="motor-box">
+                    <div class="motor-id">FL</div>
+                    <div class="motor-bar-wrap"><div class="motor-bar" id="bar-fl" style="width:50%"></div></div>
+                    <div class="motor-pct" id="pct-fl">50%</div>
+                </div>
+                <div class="motor-box">
+                    <div class="motor-id">FR</div>
+                    <div class="motor-bar-wrap"><div class="motor-bar" id="bar-fr" style="width:50%"></div></div>
+                    <div class="motor-pct" id="pct-fr">50%</div>
+                </div>
+                <div class="motor-box">
+                    <div class="motor-id">RL</div>
+                    <div class="motor-bar-wrap"><div class="motor-bar" id="bar-rl" style="width:50%"></div></div>
+                    <div class="motor-pct" id="pct-rl">50%</div>
+                </div>
+                <div class="motor-box">
+                    <div class="motor-id">RR</div>
+                    <div class="motor-bar-wrap"><div class="motor-bar" id="bar-rr" style="width:50%"></div></div>
+                    <div class="motor-pct" id="pct-rr">50%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latency race visualization -->
+        <div class="latency-race">
+            <div class="race-title">GECİKME KARŞILAŞTIRMASI</div>
+            <div class="race-row">
+                <span class="race-label" style="color:var(--blue)">Kural</span>
+                <div class="race-track"><div class="race-bar race-bar-rule" id="raceRule"></div></div>
+                <span class="race-ms" id="raceMsRule">-- ms</span>
+            </div>
+            <div class="race-row">
+                <span class="race-label" style="color:var(--purple)">Agent</span>
+                <div class="race-track"><div class="race-bar race-bar-agent" id="raceAgent"></div></div>
+                <span class="race-ms" id="raceMsAgent">-- ms</span>
+            </div>
+            <div class="race-row">
+                <span class="race-label" style="color:var(--green)">Hibrit</span>
+                <div class="race-track"><div class="race-bar race-bar-hybrid" id="raceHybrid"></div></div>
+                <span class="race-ms" id="raceMsHybrid">-- ms</span>
+            </div>
+        </div>
+
+        <div class="status-section">
+            <div id="bigMode" class="big-mode traditional">GELENEKSEL</div>
+
+            <div class="stat-mini">
+                <div class="lbl">FPS</div>
+                <div class="val" id="statFps">--</div>
+            </div>
+            <div class="stat-mini">
+                <div class="lbl">Karar/dk</div>
+                <div class="val" id="statDpm">0</div>
+            </div>
+            <div class="stat-mini" title="Geleneksel kural motoru ortalama gecikmesi">
+                <div class="lbl">Kural ms</div>
+                <div class="val" id="statLatTrad" style="color:var(--blue)">--</div>
+            </div>
+            <div class="stat-mini" title="Agentik (LLM) ortalama gecikmesi">
+                <div class="lbl">Agent ms</div>
+                <div class="val" id="statLatAgent" style="color:var(--purple)">--</div>
+            </div>
+            <div class="stat-mini" title="Hibrit (refleks+LLM) ortalama gecikmesi">
+                <div class="lbl">Hibrit ms</div>
+                <div class="val" id="statLatHybrid" style="color:var(--green)">--</div>
+            </div>
+        </div>
+    </div>
+
+</div><!-- .main-grid -->
+
+<script>
+"use strict";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────────────────────
+const S = {
+    ws:           null,
+    wsConnected:  false,
+    mode:         'traditional',
+    autoScroll:   true,
+    logCount:     0,
+    decisionCount:0,
+    decisionMinute: 0,    // decisions in the last 60s window
+    dpmTimer:     null,
+
+    // FPS tracking for camera
+    lastFrameTs:  0,
+    frameTimes:   [],
+};
+
+const MAX_LOG_LINES = 300;
+// Protocol-aware: wss:// when the page is served over HTTPS (telefon demosu için).
+const WS_PROTO = location.protocol === 'https:' ? 'wss' : 'ws';
+const WS_URL = `${WS_PROTO}://${location.host}/ws/dashboard`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WebSocket
+// ─────────────────────────────────────────────────────────────────────────────
+function connect() {
+    setSrvStatus('warn', 'Bağlanıyor…');
+    S.ws = new WebSocket(WS_URL);
+
+    S.ws.onopen = () => {
+        S.wsConnected = true;
+        setSrvStatus('ok', 'Sunucu: Bağlı');
+        addLine('SYSTEM', 'WebSocket bağlantısı kuruldu ✓', 'INFO');
+    };
+
+    S.ws.onclose = () => {
+        S.wsConnected = false;
+        setSrvStatus('err', 'Sunucu: Koptu');
+        addLine('SYSTEM', 'Bağlantı kesildi — 3s sonra yeniden denenecek', 'WARN');
+        setTimeout(connect, 3000);
+    };
+
+    S.ws.onerror = () => {
+        addLine('SYSTEM', 'WebSocket hatası', 'ERROR');
+    };
+
+    S.ws.onmessage = (ev) => {
+        try {
+            const msg = JSON.parse(ev.data);
+            handleMessage(msg);
+        } catch (_) {}
+    };
+}
+
+function handleMessage(msg) {
+    switch (msg.type) {
+
+        case 'init':
+        case 'state_update': {
+            // ── Mode ────────────────────────────────────────────────────────
+            if (msg.mode) applyMode(msg.mode);
+
+            // ── Drone connection ─────────────────────────────────────────────
+            if ('drone_connected' in msg) setDroneStatus(msg.drone_connected);
+
+            // ── Camera frame ─────────────────────────────────────────────────
+            if (msg.frame) updateFrame(msg.frame);
+
+            // ── Telemetry ────────────────────────────────────────────────────
+            if (msg.telemetry && Object.keys(msg.telemetry).length > 0)
+                updateTelemetry(msg.telemetry);
+
+            // ── Motors ───────────────────────────────────────────────────────
+            if (msg.motors) updateMotors(msg.motors);
+
+            // ── Log entries ──────────────────────────────────────────────────
+            if (Array.isArray(msg.logs)) syncLogs(msg.logs);
+
+            // ── Shadow decisions → compare strip (frozen in navOnlyMode) ──────
+            if (msg.shadow_decisions && !_navOnlyMode) {
+                const sd = msg.shadow_decisions;
+                if (sd.rule)  updateCompareCard('rule',  sd.rule);
+                if (sd.agent) {
+                    updateCompareCard('agent', sd.agent);
+                    _lastAgentDecisionTs = sd.agent.ts || (Date.now()/1000);
+                    stopThinking();  // new decision arrived → stop thinking anim
+                }
+                updateRaceBars(sd);
+                detectDivergence(sd);
+            }
+
+            // ── Drone connected mirror (for thinking indicator) ───────────────
+            if ('drone_connected' in msg) drone_state_connected.val = msg.drone_connected;
+
+            // ── Drone 3D visualization + flight HUD ───────────────────────────
+            if (msg.telemetry || msg.motors) {
+                updateDroneViz(msg.telemetry || {}, msg.motors || {});
+                updateHud(msg.telemetry || {});
+            }
+
+            // ── Live chart data push ──────────────────────────────────────────
+            if (msg.telemetry) {
+                const t = msg.telemetry;
+                const tilt = t.tilt ?? Math.max(Math.abs(t.beta||0), Math.abs(t.gamma||0));
+                pushChartPoint(tilt);
+            }
+
+            // ── AI camera badge ───────────────────────────────────────────────
+            if (msg.shadow_decisions?.agent?.used_vision) {
+                flashAiBadge();
+            }
+            break;
+        }
+
+        case 'mode_change':
+            applyMode(msg.mode);
+            break;
+
+        case 'drone_status':
+            setDroneStatus(msg.connected);
+            break;
+
+        case 'nav_result':
+            if (msg.nav) renderNavResult(msg.nav);
+            break;
+
+        case 'model_change':
+            handleModelChange(msg);
+            break;
+
+        case 'config_update':
+            applyConfigUpdate(msg);
+            break;
+
+        case 'vision_toggle':
+            applyVisionState(msg.enabled);
+            break;
+
+        case 'benchmark_done':
+            addLine('BNC', 'Benchmark tamamlandı ✓ — RAPOR butonuna bas.', 'INFO');
+            playBenchmarkDone();
+            toast('Benchmark tamamlandı', 'Sonuçlar için RAPOR (M) panelini aç', 'ok', 6000);
+            if (_reportOpen) loadReport();
+            break;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mode toggle
+// ─────────────────────────────────────────────────────────────────────────────
+function setMode(mode) {
+    if (!S.wsConnected) return;
+    S.ws.send(JSON.stringify({ type: 'set_mode', mode }));
+    applyMode(mode);
+}
+
+function applyMode(mode) {
+    if (S.mode === mode) return;
+    S.mode = mode;
+
+    const btnT = document.getElementById('btnTraditional');
+    const btnA = document.getElementById('btnAgentic');
+    const btnH = document.getElementById('btnHybrid');
+    const bigM = document.getElementById('bigMode');
+
+    btnT.className = 'mode-btn' + (mode === 'traditional' ? ' active-traditional' : '');
+    btnA.className = 'mode-btn' + (mode === 'agentic'     ? ' active-agentic'     : '');
+    btnH.className = 'mode-btn' + (mode === 'hybrid'      ? ' active-hybrid'      : '');
+
+    bigM.className = `big-mode ${mode}`;
+    const LABELS = { traditional: 'GELENEKSEL', agentic: 'AGENTİK', hybrid: 'HİBRİT' };
+    bigM.textContent = LABELS[mode] || mode.toUpperCase();
+
+    addLine('DASH', `Mod → ${mode.toUpperCase()}`, 'INFO');
+
+    // Highlight compare strip active card
+    const ruleCard  = document.getElementById('cmpRule');
+    const agentCard = document.getElementById('cmpAgent');
+    if (ruleCard)  ruleCard.classList.toggle('active-card',       mode === 'traditional');
+    if (agentCard) agentCard.classList.toggle('active-agentic',   mode === 'agentic');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Camera
+// ─────────────────────────────────────────────────────────────────────────────
+function updateFrame(b64) {
+    const img   = document.getElementById('camImg');
+    const ph    = document.getElementById('camPlaceholder');
+
+    // Always store latest src for nav analysis, but only SHOW if toggle is on
+    img.src = `data:image/jpeg;base64,${b64}`;
+    if (!_cameraDisplayOn) return;   // camera display toggled off — keep drone visual
+
+    img.style.display = 'block';
+    ph.style.display  = 'none';
+    const demoEl = document.getElementById('camDemo');
+    if (demoEl) demoEl.style.display = 'none';
+
+    // Show the "● CANLI" REC indicator while frames are flowing; auto-clear if they stop
+    const wrap = document.getElementById('camWrap');
+    if (wrap) {
+        wrap.classList.add('live-stream');
+        clearTimeout(S._liveTimer);
+        S._liveTimer = setTimeout(() => wrap.classList.remove('live-stream'), 1500);
+    }
+
+    // FPS
+    const now = performance.now();
+    if (S.lastFrameTs > 0) {
+        S.frameTimes.push(now - S.lastFrameTs);
+        if (S.frameTimes.length > 10) S.frameTimes.shift();
+        const avgMs = S.frameTimes.reduce((a, b) => a + b, 0) / S.frameTimes.length;
+        const fps   = Math.round(1000 / avgMs);
+        document.getElementById('camFps').textContent = `${fps} FPS`;
+        document.getElementById('statFps').textContent = fps;
+    }
+    S.lastFrameTs = now;
+
+    // Resolution (read from image once loaded)
+    img.onload = () => {
+        document.getElementById('camRes').textContent =
+            `${img.naturalWidth}×${img.naturalHeight}`;
+    };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Telemetry
+// ─────────────────────────────────────────────────────────────────────────────
+function updateTelemetry(t) {
+    const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val !== undefined && val !== null)
+            el.textContent = parseFloat(val).toFixed(2);
+    };
+    set('t-ax', t.ax);
+    set('t-ay', t.ay);
+    set('t-az', t.az);
+    set('t-al', t.alpha);
+    set('t-be', t.beta);
+    set('t-ga', t.gamma);
+
+    // Tilt gauge is updated by updateDroneViz — nothing to do here
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Motors
+// ─────────────────────────────────────────────────────────────────────────────
+function updateMotors(m) {
+    ['fl', 'fr', 'rl', 'rr'].forEach(id => {
+        const spd = m[id] ?? 50;
+        const bar  = document.getElementById(`bar-${id}`);
+        const pct  = document.getElementById(`pct-${id}`);
+        bar.style.width = `${spd}%`;
+        pct.textContent = `${spd}%`;
+
+        // Colour by criticality
+        bar.className = 'motor-bar';
+        if (m.mode === 'emergency_stop' || m.mode === 'emergency_stabilize')
+            bar.classList.add('danger');
+        else if (m.mode === 'stabilize')
+            bar.classList.add('stabilize');
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Terminal log
+// ─────────────────────────────────────────────────────────────────────────────
+const seenTs = new Set();    // dedup: skip log entries already rendered
+
+function syncLogs(entries) {
+    let added = 0;
+    entries.forEach(e => {
+        const key = `${e.ts}_${e.source}_${e.message}`;
+        if (seenTs.has(key)) return;
+        seenTs.add(key);
+        addLine(e.source, e.message, e.level || 'INFO');
+        // Surface the newest structured decision (rule, agent OR hybrid) on the card.
+        if (e.extra && e.extra.action &&
+            (e.source === 'AGENT' || e.source === 'RULE' || e.source === 'HYBRID')) {
+            renderDecision(e);
+            triggerFlash(e.extra.action, e.extra.hazard);
+            updateDvzStatus(e.extra.action, e.extra.hazard);
+        }
+        added++;
+    });
+
+    // Trim Set to avoid unbounded growth
+    if (seenTs.size > 2000) {
+        const arr = [...seenTs];
+        arr.slice(0, 500).forEach(k => seenTs.delete(k));
+    }
+
+    if (added > 0) {
+        S.decisionCount += added;
+        S.decisionMinute += added;
+        document.getElementById('logCountTxt').textContent =
+            `${S.logCount} LOG`;
+    }
+}
+
+function addLine(source, message, level = 'INFO') {
+    const term = document.getElementById('terminal');
+    const ts   = new Date().toLocaleTimeString('tr-TR', { hour12: false });
+
+    const line = document.createElement('div');
+    line.className = `log-line ${level}`;
+    line.innerHTML =
+        `<span class="log-ts">${ts}</span>` +
+        `<span class="log-src">[${escHtml(source)}]</span>` +
+        `<span class="log-msg">${escHtml(message)}</span>`;
+
+    term.appendChild(line);
+    S.logCount++;
+    document.getElementById('logCountTxt').textContent = `${S.logCount} LOG`;
+
+    // Keep DOM size bounded
+    while (term.children.length > MAX_LOG_LINES)
+        term.removeChild(term.firstChild);
+
+    if (S.autoScroll) term.scrollTop = term.scrollHeight;
+}
+
+function clearLog() {
+    document.getElementById('terminal').innerHTML = '';
+    S.logCount = 0;
+    seenTs.clear();
+    document.getElementById('logCountTxt').textContent = '0 LOG';
+}
+
+function toggleAutoScroll() {
+    S.autoScroll = !S.autoScroll;
+    document.getElementById('asBtn').textContent = S.autoScroll ? 'AUTO ↓' : 'MANUAL';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Status badges
+// ─────────────────────────────────────────────────────────────────────────────
+function setSrvStatus(cls, text) {
+    const badge = document.getElementById('srvBadge');
+    const dot   = document.getElementById('srvDot');
+    const span  = document.getElementById('srvTxt');
+    badge.className = `badge ${cls}`;
+    dot.className   = `dot ${cls === 'ok' ? '' : 'pulse'}`;
+    span.textContent = text;
+}
+
+function setDroneStatus(connected) {
+    const badge = document.getElementById('droneBadge');
+    const dot   = document.getElementById('droneDot');
+    const span  = document.getElementById('droneTxt');
+    badge.className = `badge ${connected ? 'ok' : 'err'}`;
+    dot.className   = `dot ${connected ? '' : 'pulse'}`;
+    span.textContent = connected ? 'Drone: Bağlı ✓' : 'Drone: Bağlı Değil';
+
+    if (!connected) {
+        document.getElementById('camImg').style.display = 'none';
+        document.getElementById('camPlaceholder').style.display = 'flex';
+        // Reset camera toggle to OFF — show drone visual again
+        if (_cameraDisplayOn) toggleCameraDisplay();
+    }
+    const analyzeBtn = document.getElementById('camAnalyzeBtn');
+    if (analyzeBtn) analyzeBtn.style.display = connected ? 'block' : 'none';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Decisions-per-minute meter (rolling 60s)
+// ─────────────────────────────────────────────────────────────────────────────
+setInterval(() => {
+    document.getElementById('statDpm').textContent = S.decisionMinute;
+    S.decisionMinute = 0;
+}, 60000);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Utility
+// ─────────────────────────────────────────────────────────────────────────────
+function escHtml(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Agent Decision Card — live explainability
+// ─────────────────────────────────────────────────────────────────────────────
+const HAZARD_COLOR = {
+    NONE: 'var(--green)', LOW: 'var(--green)', MEDIUM: 'var(--yellow)',
+    HIGH: 'var(--red)',   CRITICAL: 'var(--red)',
+};
+
+function renderDecision(e) {
+    const x = e.extra || {};
+    const card = document.getElementById('decisionCard');
+    if (!card) return;
+
+    const action = String(x.action || '—');
+    const hazard = String(x.hazard || 'NONE');
+    const conf   = (x.confidence != null) ? Math.round(x.confidence * 100) : null;
+    const col    = HAZARD_COLOR[hazard] || 'var(--dim)';
+    const isAgent  = e.source === 'AGENT';
+    const isHybrid = e.source === 'HYBRID';
+
+    const aEl = document.getElementById('dcAction');
+    aEl.textContent = action;
+    aEl.style.color = col;
+
+    const hEl = document.getElementById('dcHazard');
+    hEl.textContent = 'RİSK: ' + hazard;
+    hEl.style.color = col;
+
+    const modeChip = document.getElementById('dcMode');
+    if (isHybrid) {
+        // x.source is the arbitration outcome: reflex-override / deliberation / …
+        const arb = String(x.source || '').toUpperCase();
+        modeChip.textContent       = 'HİBRİT' + (arb ? ' · ' + arb : '');
+        modeChip.style.color       = 'var(--green)';
+        modeChip.style.borderColor = 'var(--green)';
+    } else if (isAgent) {
+        modeChip.textContent       = 'AGENTİK · LLM';
+        modeChip.style.color       = 'var(--purple)';
+        modeChip.style.borderColor = 'var(--purple)';
+    } else {
+        modeChip.textContent       = 'KURAL · IF/THEN';
+        modeChip.style.color       = 'var(--blue)';
+        modeChip.style.borderColor = 'var(--blue)';
+    }
+
+    // Reasoning: agent messages are "ACTION (HAZARD) @ tilt X° — reasoning".
+    let reason = String(e.message || '');
+    const i = reason.indexOf(' — ');
+    if (i >= 0) reason = reason.slice(i + 3);
+    document.getElementById('dcReason').textContent = reason || '—';
+
+    const bar = document.getElementById('dcConfBar');
+    document.getElementById('dcConf').textContent = (conf != null) ? conf + '%' : '--%';
+    bar.style.width = (conf != null ? conf : 0) + '%';
+    bar.style.background = col;
+
+    const lat = x.latency_ms;
+    document.getElementById('dcLatency').textContent =
+        (lat != null) ? (lat < 1 ? '<1 ms' : Math.round(lat) + ' ms')
+                      : (isAgent ? '-- ms' : '<1 ms');
+
+    const vis = document.getElementById('dcVision');
+    vis.textContent  = x.used_vision ? '👁 görüş' : '👁 yok';
+    vis.style.color  = x.used_vision ? 'var(--green)' : 'var(--dim)';
+
+    card.style.borderColor = (x.ok === false) ? 'var(--red)' : col;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ollama status + live latency comparison (REST polling)
+// ─────────────────────────────────────────────────────────────────────────────
+async function pollOllama() {
+    const badge = document.getElementById('ollamaBadge');
+    const dot   = document.getElementById('ollamaDot');
+    const txt   = document.getElementById('ollamaTxt');
+    if (!badge) return;
+    try {
+        const d = await (await fetch('/api/ollama')).json();
+        if (!d.reachable) {
+            badge.className = 'badge err'; dot.className = 'dot pulse';
+            txt.textContent = 'Ollama: Kapalı → fallback';
+        } else if (!d.model_available) {
+            badge.className = 'badge warn'; dot.className = 'dot pulse';
+            txt.textContent = 'Ollama: model yok';
+        } else {
+            badge.className = 'badge ok'; dot.className = 'dot';
+            txt.textContent = 'Ollama: Hazır ✓';
+        }
+    } catch (_) {
+        badge.className = 'badge err'; dot.className = 'dot pulse';
+        txt.textContent = 'Ollama: ?';
+    }
+}
+
+async function pollMetrics() {
+    try {
+        const d = await (await fetch('/api/metrics/summary')).json();
+        const bm = d.by_mode || {};
+        const fmt = (m) => {
+            const v = bm[m] && bm[m].latency_ms ? bm[m].latency_ms.avg : null;
+            if (v == null) return '--';
+            return v < 1 ? v.toFixed(2) : Math.round(v).toString();
+        };
+        const t = document.getElementById('statLatTrad');
+        const a = document.getElementById('statLatAgent');
+        const h = document.getElementById('statLatHybrid');
+        if (t) t.textContent = fmt('traditional');
+        if (a) a.textContent = fmt('agentic');
+        if (h) h.textContent = fmt('hybrid');
+    } catch (_) {}
+}
+
+// Thinking indicator: if agentic mode + drone connected + last decision > 1.5s ago → show
+setInterval(() => {
+    if (S.mode === 'agentic' && drone_state_connected.val) {
+        const elapsed = (Date.now() / 1000) - _lastAgentDecisionTs;
+        if (elapsed > 1.5 && !document.getElementById('thinkingOverlay')?.classList.contains('active')) {
+            startThinking();
+        }
+    } else {
+        stopThinking();
+    }
+}, 500);
+
+setInterval(pollOllama, 5000);
+setInterval(pollMetrics, 3000);
+pollOllama();
+pollMetrics();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Compare strip — Rule vs Agent side-by-side (shadow decisions)
+// ─────────────────────────────────────────────────────────────────────────────
+const HAZARD_COLS = {
+    NONE: 'var(--green)', LOW: 'var(--green)', MEDIUM: 'var(--yellow)',
+    HIGH: 'var(--red)', CRITICAL: 'var(--red)',
+};
+
+function updateCompareCard(who, d) {
+    if (!d) return;
+    const s   = who === 'rule' ? 'Rule' : 'Agent';
+    const action = d.action || '—';
+    const col = action === 'HOVER' || action === 'HOLD'
+        ? '#3fb950'
+        : action === 'EMERGENCY_STABILIZE'
+        ? '#f85149'
+        : action === 'STABILIZE'
+        ? '#e3b341'
+        : HAZARD_COLS[d.hazard] || 'var(--dim)';
+
+    // Action (big text)
+    const aEl = document.getElementById(`cmp${s}Action`);
+    if (aEl) { aEl.textContent = action; aEl.style.color = col; }
+
+    // Condition / reasoning in monospace code style
+    const condEl = document.getElementById(`cmp${s}Condition`);
+    if (condEl) {
+        if (who === 'rule') {
+            condEl.textContent = d.reasoning || '—';
+        } else {
+            // For agent, show a short version of hazard context
+            const hz = d.hazard && d.hazard !== 'NONE' ? ` [${d.hazard}]` : '';
+            condEl.textContent = `tilt(${d.tilt_deg != null ? d.tilt_deg.toFixed(1) : '--'}°)${hz} → ${d.action}`;
+        }
+    }
+
+    // Latency
+    const latEl = document.getElementById(`cmp${s}Lat`);
+    if (latEl) {
+        const ms = d.latency_ms;
+        latEl.textContent = (ms != null) ? (ms < 1 ? '<1 ms' : Math.round(ms) + ' ms') : '-- ms';
+        latEl.style.color = who === 'rule'
+            ? (ms < 1 ? 'var(--green)' : 'var(--blue)')
+            : 'var(--purple)';
+    }
+
+    // Camera indicator (agent only — rule never uses camera)
+    if (who === 'agent') {
+        const camEl = document.getElementById('cmpAgentCam');
+        if (camEl) {
+            if (d.used_vision) {
+                camEl.textContent = '📷 KAMERA ✓';
+                camEl.className = 'cmp-cam cam-yes';
+            } else {
+                camEl.textContent = '📷 Kamera yok';
+                camEl.className = 'cmp-cam cam-no';
+            }
+        }
+    }
+
+    // Reasoning (full text below)
+    const rEl = document.getElementById(`cmp${s}Reason`);
+    if (rEl) rEl.textContent = d.reasoning || '—';
+
+    // Confidence bar
+    const conf = (d.confidence != null) ? Math.round(d.confidence * 100) : 0;
+    const cBar = document.getElementById(`cmp${s}Conf`);
+    if (cBar) { cBar.style.width = conf + '%'; cBar.style.background = col; }
+    const cPct = document.getElementById(`cmp${s}ConfPct`);
+    if (cPct) cPct.textContent = conf + '%';
+
+    // Feed chart's last-known action for this mode
+    if (who === 'rule')  CHART.lastRule  = d.action;
+    if (who === 'agent') CHART.lastAgent = d.action;
+
+    updateAccuracy(who, d);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Paradigm divergence detector — flags when rule & agent decisions differ
+// ─────────────────────────────────────────────────────────────────────────────
+let _lastDiverge = '';
+function detectDivergence(sd) {
+    const banner = document.getElementById('divergeBanner');
+    if (!banner || !sd.rule || !sd.agent) return;
+    const ra = sd.rule.action, aa = sd.agent.action;
+    if (!ra || !aa) return;
+    // Treat HOVER/HOLD as equivalent "nominal" actions
+    const norm = a => (a === 'HOLD' ? 'HOVER' : a);
+    const diverged = norm(ra) !== norm(aa);
+    if (diverged) {
+        banner.style.display = 'flex';
+        const detail = document.getElementById('divergeDetail');
+        if (detail) detail.textContent = `Kural: ${ra}  ⇄  Agent: ${aa}`;
+        const key = ra + '|' + aa;
+        if (key !== _lastDiverge) {
+            _lastDiverge = key;
+            // toast removed — diverge banner is sufficient
+        }
+    } else {
+        banner.style.display = 'none';
+        _lastDiverge = '';
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Accuracy tracker — JS-side correctness scoring
+// ─────────────────────────────────────────────────────────────────────────────
+const ACC = { rule: { c: 0, n: 0 }, agent: { c: 0, n: 0 } };
+
+function isCorrectAction(action, tilt) {
+    if (tilt >= 30) return action === 'STABILIZE' || action === 'EMERGENCY_STOP';
+    if (tilt >= 15) return action === 'STABILIZE';
+    return action === 'HOVER' || action === 'HOLD' || action === 'ADJUST_MOTOR';
+}
+
+function updateAccuracy(who, d) {
+    if (!d || d.tilt_deg == null || !d.action) return;
+    const ok = isCorrectAction(d.action, d.tilt_deg);
+    ACC[who].n++;
+    if (ok) ACC[who].c++;
+    const pct = ACC[who].n ? Math.round(ACC[who].c / ACC[who].n * 100) : 0;
+    const suffix = who === 'rule' ? 'Rule' : 'Agent';
+    const barEl  = document.getElementById(`acc${suffix}Bar`);
+    const statEl = document.getElementById(`acc${suffix}Stat`);
+    if (barEl)  barEl.style.width = pct + '%';
+    if (statEl) statEl.textContent = pct + '% (' + ACC[who].c + '/' + ACC[who].n + ')';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Drone 3D visualization
+// ─────────────────────────────────────────────────────────────────────────────
+function updateDroneViz(telemetry, motors) {
+    const body = document.getElementById('drone3d');
+    if (!body) return;
+    const beta  = parseFloat(telemetry?.beta  || 0);
+    const gamma = parseFloat(telemetry?.gamma || 0);
+    const rx = Math.max(-45, Math.min(45, -beta));
+    const ry = Math.max(-45, Math.min(45,  gamma));
+    // SVG doesn't support 3D transforms — use 2D skew+rotate to simulate tilt
+    const skewX = Math.max(-30, Math.min(30, gamma * 0.5));
+    const rot   = Math.max(-30, Math.min(30, gamma));
+    body.style.transform = `rotate(${rot}deg) skewX(${skewX * 0.3}deg)`;
+
+    if (motors) ['fl','fr','rl','rr'].forEach(m => setRotorSpeed(m, motors[m] ?? 50));
+
+    const tilt = Math.max(Math.abs(beta), Math.abs(gamma));
+    const col  = tilt >= 30 ? '#f85149' : tilt >= 15 ? '#e3b341' : '#58a6ff';
+
+    const hub = document.getElementById('dHub');
+    if (hub) hub.setAttribute('stroke', col);
+
+    const tiltEl = document.getElementById('svgTiltVal');
+    if (tiltEl) {
+        tiltEl.textContent = tilt.toFixed(1) + '°';
+        tiltEl.setAttribute('fill', tilt >= 30 ? '#f85149' : tilt >= 15 ? '#e3b341' : '#79c0ff');
+    }
+
+    // Update tilt gauge bar
+    const fill = document.getElementById('tgFill');
+    const tiltNum = document.getElementById('t-tilt');
+    const tiltSt  = document.getElementById('t-tilt-status');
+    if (fill) {
+        const pct = Math.min(tilt / 45 * 100, 100);
+        const barCol = tilt >= 30 ? '#f85149' : tilt >= 15 ? '#e3b341' : '#3fb950';
+        fill.style.width = pct + '%';
+        fill.style.background = barCol;
+    }
+    if (tiltNum) tiltNum.textContent = tilt.toFixed(1) + '°';
+    if (tiltSt) {
+        const [txt, c] = tilt >= 30
+            ? ['🔴 ACİL DURUM', '#f85149']
+            : tilt >= 15
+            ? ['🟡 UYARI — EĞİLİYOR', '#e3b341']
+            : ['🟢 DENGEDE', '#3fb950'];
+        tiltSt.textContent = txt;
+        tiltSt.style.color = c;
+    }
+
+    // Update demo camera visual if active
+    const activeAction = document.getElementById('cmpRuleAction')?.textContent || 'HOVER';
+    updateCamDemo(tilt, activeAction, beta, gamma);
+}
+
+function setRotorSpeed(m, pct) {
+    const dur = Math.max(0.04, 0.5 - (pct / 100) * 0.46);
+    const col = pct >= 80 ? '#f85149' : pct >= 65 ? '#e3b341' : '#3fb950';
+    const propg = document.getElementById(`propg-${m}`);
+    if (propg) propg.style.animationDuration = `${dur}s`;
+    const mring = document.getElementById(`mring-${m}`);
+    if (mring) mring.setAttribute('stroke', col);
+    const pEl = document.getElementById(`mpct-${m}`);
+    if (pEl) { pEl.textContent = pct + '%'; pEl.setAttribute('fill', col + 'aa'); }
+    // Also update bottom bar
+    const bar = document.getElementById(`bar-${m}`);
+    if (bar) { bar.style.width = pct + '%'; bar.style.background = col; }
+    const pctEl = document.getElementById(`pct-${m}`);
+    if (pctEl) pctEl.textContent = pct + '%';
+}
+
+// ── Flight HUD: artificial horizon driven by IMU ─────────────────────────────
+let _hudOn = false;
+let _cameraDisplayOn = false;   // default: show drone visual, not real camera
+
+function toggleCameraDisplay() {
+    _cameraDisplayOn = !_cameraDisplayOn;
+    const btn = document.getElementById('camToggleBtn');
+    if (btn) {
+        btn.textContent        = _cameraDisplayOn ? '📷 KAMERA KAPAT' : '📷 KAMERA AÇ';
+        btn.style.background   = _cameraDisplayOn ? 'rgba(63,185,80,.25)' : 'rgba(0,0,0,.55)';
+        btn.style.color        = _cameraDisplayOn ? 'var(--green)'        : 'rgba(255,255,255,.6)';
+        btn.style.borderColor  = _cameraDisplayOn ? 'var(--green)'        : 'rgba(255,255,255,.25)';
+    }
+    if (!_cameraDisplayOn) {
+        // Hide real camera, go back to demo or placeholder
+        document.getElementById('camImg').style.display = 'none';
+        const demo = document.getElementById('camDemo');
+        if (!demo || demo.style.display === 'none') {
+            document.getElementById('camPlaceholder').style.display = 'flex';
+        }
+    }
+    // If turning on: next updateFrame() call will show the real camera
+}
+function toggleHud(ev) {
+    if (ev) ev.stopPropagation();
+    _hudOn = !_hudOn;
+    const hud = document.getElementById('hud');
+    if (hud) hud.classList.toggle('hidden', !_hudOn);
+}
+
+function updateHud(t) {
+    if (!_hudOn || !t) return;
+    const beta  = parseFloat(t.beta  || 0);   // pitch
+    const gamma = parseFloat(t.gamma || 0);   // roll
+    const alpha = parseFloat(t.alpha || 0);   // yaw/heading
+
+    const horizon = document.getElementById('hudHorizon');
+    if (horizon) {
+        // pitch: ~3px per degree, clamped; roll: rotate opposite of gamma
+        const dy = Math.max(-120, Math.min(120, beta * 3));
+        horizon.setAttribute('transform',
+            `rotate(${-gamma} 200 150) translate(0 ${dy})`);
+    }
+    const ptr = document.getElementById('hudRollPtr');
+    if (ptr) ptr.setAttribute('transform', `rotate(${-gamma} 200 120)`);
+
+    const hdg = document.getElementById('hudHeading');
+    if (hdg) {
+        const h = ((Math.round(alpha) % 360) + 360) % 360;
+        hdg.textContent = 'HDG ' + String(h).padStart(3, '0') + '°';
+    }
+    const tilt = Math.max(Math.abs(beta), Math.abs(gamma));
+    const tEl = document.getElementById('hudTilt');
+    if (tEl) {
+        tEl.textContent = 'TILT ' + tilt.toFixed(1) + '°';
+        const col = tilt >= _cfgDanger ? '#f85149' : tilt >= _cfgWarn ? '#e3b341' : '#00e676';
+        tEl.setAttribute('fill', col);
+    }
+    const mEl = document.getElementById('hudMode');
+    if (mEl) {
+        const L = { traditional: 'GELENEKSEL', agentic: 'AGENTİK', hybrid: 'HİBRİT' };
+        mEl.textContent = L[S.mode] || S.mode.toUpperCase();
+    }
+}
+
+function updateDvzStatus(action, hazard) {
+    const el = document.getElementById('dvzStatus');
+    if (!el) return;
+    el.textContent = action || 'BEKLENIYOR';
+    const col = HAZARD_COLS[hazard] || 'var(--matrix-text)';
+    el.style.color       = col;
+    el.style.textShadow  = `0 0 8px ${col}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Demo scenario injection
+// ─────────────────────────────────────────────────────────────────────────────
+const DEMO_META = {
+    calm:         { label: '🟢 SAKİN UÇUŞ',   bg: 'linear-gradient(180deg,#071420 0%,#0a2a0a 70%,#071a05 100%)' },
+    gradual_tilt: { label: '🟡 EĞİM SENARYOSU', bg: 'linear-gradient(180deg,#1a1400 0%,#2a1e00 70%,#0a1005 100%)' },
+    critical:     { label: '🔴 KRİTİK EĞİM',   bg: 'linear-gradient(180deg,#2a0600 0%,#1a0200 70%,#0a0505 100%)' },
+    obstacle:     { label: '🎯 ENGEL TESPİTİ', bg: 'linear-gradient(180deg,#071420 0%,#0d1a2a 70%,#050a14 100%)' },
+    shake:        { label: '🌀 SARSINTI',       bg: 'linear-gradient(180deg,#0a0a00 0%,#1a1200 70%,#080805 100%)' },
+    turbulence:   { label: '🌪 TÜRBÜLANS',      bg: 'linear-gradient(180deg,#100010 0%,#1a0a1a 70%,#080508 100%)' },
+    wind_gust:    { label: '💨 RÜZGAR',         bg: 'linear-gradient(180deg,#001020 0%,#001828 70%,#000a10 100%)' },
+    zigzag:       { label: '↔ ZİKZAK',         bg: 'linear-gradient(180deg,#001020 0%,#00141e 70%,#000810 100%)' },
+    ai_advantage: { label: '🧠 AI ÜSTÜNLÜĞÜ (0→13°)', bg: 'linear-gradient(180deg,#1a0d00 0%,#2a1400 70%,#0a0800 100%)' },
+};
+
+async function startScenario(name) {
+    try {
+        const r = await fetch(`/api/demo/scenario/${name}`, { method: 'POST' });
+        const d = await r.json();
+        if (d.ok) {
+            document.getElementById('demoStopBtn').disabled = false;
+            addLine('DEMO', `Senaryo: ${name.toUpperCase()} başlatıldı`, 'INFO');
+            showCamDemo(name);
+        }
+    } catch(e) { addLine('DEMO', `Hata: ${e.message}`, 'ERROR'); }
+}
+async function stopScenario() {
+    try {
+        await fetch('/api/demo/stop', { method: 'POST' });
+        document.getElementById('demoStopBtn').disabled = true;
+        addLine('DEMO', 'Senaryo durduruldu.', 'INFO');
+        hideCamDemo();
+    } catch(e) {}
+}
+
+function showCamDemo(name) {
+    const meta = DEMO_META[name] || { label: name.toUpperCase(), bg: DEMO_META.calm.bg };
+    const bg    = document.getElementById('demoBg');
+    const label = document.getElementById('demoScenLabel');
+    const obs   = document.getElementById('demoObstacle');
+    if (bg)    bg.style.background = meta.bg;
+    if (label) label.textContent   = meta.label;
+    if (obs)   obs.style.opacity   = name === 'obstacle' ? '1' : '0';
+    document.getElementById('camPlaceholder').style.display = 'none';
+    document.getElementById('camImg').style.display         = 'none';
+    document.getElementById('camDemo').style.display        = 'block';
+    // updateFrame() will restore real camera when phone reconnects
+}
+
+function hideCamDemo() {
+    document.getElementById('camDemo').style.display = 'none';
+    if (document.getElementById('camImg').style.display === 'none') {
+        document.getElementById('camPlaceholder').style.display = 'flex';
+    }
+}
+
+function updateCamDemo(tilt, action, beta = 0, gamma = 0) {
+    const demo = document.getElementById('camDemo');
+    if (!demo || demo.style.display === 'none') return;
+
+    // Tilt the drone — use gamma for left/right roll (most visible from front view)
+    // beta adds a slight forward/back skew
+    const rollDeg = Math.max(-35, Math.min(35, gamma));
+    const body = document.getElementById('demoDroneSvg');
+    if (body) body.style.transform = `rotate(${rollDeg}deg)`;
+
+    // Big angle text
+    const ang = document.getElementById('demoBigAngle');
+    const badge = document.getElementById('demoStatusBadge');
+    const led   = document.getElementById('dLed');
+    const bg    = document.getElementById('demoBg');
+
+    const col = tilt >= 30 ? '#f85149' : tilt >= 15 ? '#e3b341' : '#3fb950';
+    if (ang) { ang.textContent = tilt.toFixed(1) + '°'; ang.setAttribute('fill', col); }
+
+    if (badge) {
+        badge.textContent         = action || 'HOVER';
+        badge.style.color         = col;
+        badge.style.borderColor   = col;
+        badge.style.background    = col.replace(')', ',.15)').replace('rgb', 'rgba');
+    }
+    if (led) { led.setAttribute('fill', col); led.style.filter = `drop-shadow(0 0 6px ${col})`; }
+
+    // Motor rings color
+    ['dmring-l','dmring-r'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('stroke', col);
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Navigation panel — "AI sees, rule is blind" demo
+// ─────────────────────────────────────────────────────────────────────────────
+let _navPanelOpen = false;
+let _navOnlyMode  = false;   // when true: compare cards frozen, nav result shown instead
+
+function setNavOnlyMode(on) {
+    _navOnlyMode = on;
+    // Hide/show compare strip, diverge banner, drone viz, log terminal
+    const toHide = [
+        document.querySelector('.compare-strip'),
+        document.getElementById('divergeBanner'),
+        document.querySelector('.drone-viz-panel'),
+        document.querySelector('.terminal-header'),
+        document.getElementById('terminal'),
+    ];
+    toHide.forEach(el => { if (el) el.style.display = on ? 'none' : ''; });
+    // Show/hide nav result panel
+    const navResult = document.getElementById('navResultPanel');
+    if (navResult) navResult.style.display = on ? 'flex' : 'none';
+}
+
+function toggleNavPanel() {
+    _navPanelOpen = !_navPanelOpen;
+    const panel = document.getElementById('navPanel');
+    const btn   = document.getElementById('btnNav');
+    setNavOnlyMode(_navPanelOpen);   // opening = nav-only, closing = stabilize
+    if (panel) panel.style.display = _navPanelOpen ? 'block' : 'none';
+    if (btn) {
+        btn.style.background = _navPanelOpen ? 'var(--teal)' : '';
+        btn.style.color      = _navPanelOpen ? '#0d1117'     : '';
+        btn.style.borderColor= _navPanelOpen ? 'var(--teal)' : '';
+    }
+    if (_navPanelOpen) {
+        addLine('NAV', 'Engel tespiti modu aktif — analiz başlatıldı.', 'INFO');
+        runNavAnalysis();   // auto-run on open
+    }
+}
+
+let _navRunning = false;
+async function runNavAnalysis() {
+    if (_navRunning) return;
+    _navRunning = true;
+    const btn = document.getElementById('navBtn');
+    if (btn) { btn.textContent = '⏳ Analiz…'; btn.disabled = true; }
+
+    try {
+        const r = await fetch('/api/nav/analyze', { method: 'POST' });
+        const d = await r.json();
+        renderNavResult(d);
+    } catch(e) {
+        addLine('NAV', `Hata: ${e.message}`, 'ERROR');
+    } finally {
+        _navRunning = false;
+        if (btn) { btn.textContent = 'Analiz Et'; btn.disabled = false; }
+    }
+}
+
+const NAV_ACTION_ICONS = {
+    MOVE_FORWARD:  { arrow: '⬆', label: 'İLERİ GİT',  col: '#3fb950' },
+    TURN_LEFT:     { arrow: '⬅', label: 'SOLA DÖN',   col: '#e3b341' },
+    TURN_RIGHT:    { arrow: '➡', label: 'SAĞA DÖN',   col: '#e3b341' },
+    STOP_OBSTACLE: { arrow: '⏹', label: 'DUR! ENGEL', col: '#f85149' },
+    ASCEND:        { arrow: '⬆', label: 'YÜKSEl',     col: '#58a6ff' },
+    DESCEND:       { arrow: '⬇', label: 'AŞAĞI',      col: '#58a6ff' },
+    UNKNOWN:       { arrow: '?', label: 'BİLİNMİYOR', col: '#8b949e' },
+};
+
+function renderNavResult(d) {
+    // Update nav result panel (shown when nav-only mode active)
+    if (_navOnlyMode) {
+        const info = NAV_ACTION_ICONS[d.action] || NAV_ACTION_ICONS.UNKNOWN;
+        const act  = document.getElementById('navResAction');
+        const det  = document.getElementById('navResDetail');
+        const rul  = document.getElementById('navResRule');
+        if (act) { act.textContent = info.label; act.style.color = info.col; }
+        if (det) det.textContent = d.obstacle_detected
+            ? `Engel tespit edildi (${d.obstacle_position || 'merkez'}) — ${d.reasoning || ''}`.slice(0,90)
+            : (d.what_i_see || 'Yol açık — ilerle');
+        if (rul) rul.textContent = '⊞ Kural (kör): ' + (d.rule_would_say || 'HOVER');
+    }
+
+    // Rule blind verdict
+    const rvEl = document.getElementById('navRuleBlind');
+    if (rvEl) rvEl.textContent = d.rule_would_say || '—';
+
+    // AI action
+    const info   = NAV_ACTION_ICONS[d.action] || NAV_ACTION_ICONS.UNKNOWN;
+    const actEl  = document.getElementById('navAiAction');
+    if (actEl) {
+        const deg = d.turn_degrees ? ` ${d.turn_degrees}°` : '';
+        actEl.textContent = info.label + deg;
+        actEl.style.color = info.col;
+    }
+
+    // What the AI sees
+    const seeEl = document.getElementById('navAiSee');
+    if (seeEl) seeEl.textContent = d.what_i_see || '—';
+
+    const reasonEl = document.getElementById('navAiReason');
+    if (reasonEl) reasonEl.textContent = d.reasoning || '—';
+
+    // Confidence
+    const conf = d.confidence != null ? Math.round(d.confidence * 100) : 0;
+    const cBar = document.getElementById('navConfBar');
+    if (cBar) { cBar.style.width = conf + '%'; cBar.style.background = info.col; }
+
+    const latEl = document.getElementById('navLatency');
+    if (latEl) latEl.textContent = d.latency_ms != null ? Math.round(d.latency_ms) + ' ms' : '-- ms';
+
+    // nav toasts removed — nav panel shows results directly
+
+    // Camera overlay direction arrow
+    const ov    = document.getElementById('obsOverlay');
+    const arrEl = document.getElementById('obsArrow');
+    const lblEl = document.getElementById('obsLabel');
+    if (ov && arrEl && lblEl) {
+        arrEl.textContent = info.arrow;
+        arrEl.style.color = info.col;
+        lblEl.textContent = info.label + (d.turn_degrees ? ` ${d.turn_degrees}°` : '');
+        lblEl.style.color = info.col;
+        ov.classList.toggle('visible', d.action !== 'UNKNOWN');
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Action flash — brief full-screen burst for dramatic decisions
+// ─────────────────────────────────────────────────────────────────────────────
+let _lastFlashAction = '';
+function triggerFlash(action, hazard) {
+    if (!action || action === 'HOVER' || action === 'HOLD') return;
+    if (action === _lastFlashAction) return;
+    _lastFlashAction = action;
+    const ov  = document.getElementById('actionFlash');
+    const txt = document.getElementById('flashContent');
+    if (!ov || !txt) return;
+    txt.textContent = action;
+    txt.style.color = hazard === 'CRITICAL' || hazard === 'HIGH'
+        ? 'var(--red)' : hazard === 'MEDIUM' ? 'var(--yellow)' : 'var(--green)';
+    ov.style.display = 'flex';
+    txt.style.animation = 'none';
+    void txt.offsetHeight;
+    txt.style.animation = '';
+    setTimeout(() => { ov.style.display = 'none'; _lastFlashAction = ''; }, 1000);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Live tilt history chart (canvas-based, no external libraries)
+// ─────────────────────────────────────────────────────────────────────────────
+const CHART = {
+    data: [],        // {ts, tilt, ruleAction, agentAction}
+    maxPoints: 240,  // 2 samples/sec × 120sec window
+    maxTilt: 50,
+    lastRule: null,
+    lastAgent: null,
+};
+
+function pushChartPoint(tilt) {
+    CHART.data.push({
+        ts: Date.now(),
+        tilt: Math.max(0, Math.min(CHART.maxTilt, tilt)),
+        ruleAction:  CHART.lastRule,
+        agentAction: CHART.lastAgent,
+    });
+    if (CHART.data.length > CHART.maxPoints) CHART.data.shift();
+    requestAnimationFrame(drawChart);
+}
+
+function drawChart() {
+    const canvas = document.getElementById('tiltChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width  = canvas.offsetWidth  || canvas.clientWidth;
+    const H = canvas.height = canvas.offsetHeight || canvas.clientHeight;
+    if (!W || !H) return;
+
+    const P = { t: 14, r: 8, b: 22, l: 34 };
+    const cW = W - P.l - P.r, cH = H - P.t - P.b;
+
+    ctx.clearRect(0, 0, W, H);
+
+    const yOf = v => P.t + cH * (1 - Math.min(v, CHART.maxTilt) / CHART.maxTilt);
+    const y15 = yOf(15), y30 = yOf(30);
+
+    // Zone backgrounds
+    ctx.fillStyle = 'rgba(63,185,80,.05)';
+    ctx.fillRect(P.l, y15, cW, P.t + cH - y15);
+    ctx.fillStyle = 'rgba(227,179,65,.07)';
+    ctx.fillRect(P.l, y30, cW, y15 - y30);
+    ctx.fillStyle = 'rgba(248,81,73,.07)';
+    ctx.fillRect(P.l, P.t, cW, y30 - P.t);
+
+    // Threshold dashes
+    [[y15,'rgba(227,179,65,.45)','15°'],[y30,'rgba(248,81,73,.5)','30°']].forEach(([y,c,l]) => {
+        ctx.setLineDash([5,4]); ctx.strokeStyle = c; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(P.l, y); ctx.lineTo(P.l+cW, y); ctx.stroke();
+        ctx.fillStyle = c; ctx.font = '9px Courier New'; ctx.textAlign = 'right';
+        ctx.fillText(l, P.l - 3, y + 3);
+    });
+    ctx.setLineDash([]);
+
+    // Y-axis labels (0, 30, 50)
+    [0,30,50].forEach(v => {
+        const y = yOf(v);
+        ctx.fillStyle = 'rgba(139,148,158,.5)'; ctx.font='9px Courier New'; ctx.textAlign='right';
+        ctx.fillText(v+'°', P.l-3, y+3);
+    });
+
+    if (CHART.data.length < 2) {
+        ctx.fillStyle='rgba(139,148,158,.25)'; ctx.font='11px Courier New'; ctx.textAlign='center';
+        ctx.fillText('Senaryo başlatın veya drone bağlayın…', P.l+cW/2, P.t+cH/2);
+        return;
+    }
+
+    const now = Date.now(), winMs = 60000;
+    const xOf = ts => P.l + Math.max(0, Math.min(1, (ts-(now-winMs))/winMs)) * cW;
+
+    // Filled area under tilt line
+    const grad = ctx.createLinearGradient(0,P.t,0,P.t+cH);
+    grad.addColorStop(0,'rgba(248,81,73,.45)');
+    grad.addColorStop(0.45,'rgba(227,179,65,.2)');
+    grad.addColorStop(1,'rgba(63,185,80,.08)');
+    ctx.beginPath();
+    ctx.moveTo(xOf(CHART.data[0].ts), P.t+cH);
+    CHART.data.forEach(d => ctx.lineTo(xOf(d.ts), yOf(d.tilt)));
+    ctx.lineTo(xOf(CHART.data.at(-1).ts), P.t+cH);
+    ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+
+    // Tilt line
+    ctx.beginPath();
+    CHART.data.forEach((d,i) =>
+        i===0 ? ctx.moveTo(xOf(d.ts),yOf(d.tilt)) : ctx.lineTo(xOf(d.ts),yOf(d.tilt))
+    );
+    ctx.strokeStyle='rgba(121,192,255,.9)'; ctx.lineWidth=1.5; ctx.stroke();
+
+    // Decision dots
+    CHART.data.forEach(d => {
+        if (d.ruleAction && d.ruleAction!=='HOVER' && d.ruleAction!=='HOLD') {
+            ctx.beginPath();
+            ctx.arc(xOf(d.ts), yOf(d.tilt)-7, 3.5, 0, Math.PI*2);
+            ctx.fillStyle='var(--blue)'; ctx.fill();
+        }
+        if (d.agentAction && d.agentAction!=='HOVER' && d.agentAction!=='HOLD') {
+            ctx.beginPath();
+            ctx.arc(xOf(d.ts), yOf(d.tilt)+7, 3.5, 0, Math.PI*2);
+            ctx.fillStyle='var(--purple)'; ctx.fill();
+        }
+    });
+
+    // X-axis time labels
+    ctx.fillStyle='rgba(139,148,158,.4)'; ctx.font='9px Courier New'; ctx.textAlign='center';
+    ctx.fillText('60s önce', P.l+2,  P.t+cH+14);
+    ctx.fillText('şimdi',    P.l+cW, P.t+cH+14);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Session Report panel
+// ─────────────────────────────────────────────────────────────────────────────
+let _reportOpen = false;
+
+function toggleReport() {
+    _reportOpen = !_reportOpen;
+    document.getElementById('reportPanel').classList.toggle('open', _reportOpen);
+    if (_reportOpen) loadReport();
+}
+
+function closeReport() {
+    _reportOpen = false;
+    document.getElementById('reportPanel').classList.remove('open');
+}
+
+async function loadReport() {
+    const body = document.getElementById('reportBody');
+    if (!body) return;
+    body.innerHTML = '<div style="color:var(--dim);font-size:.72rem;text-align:center;padding:20px">Yükleniyor…</div>';
+    try {
+        const [sumR, olR] = await Promise.all([
+            fetch('/api/metrics/summary'),
+            fetch('/api/ollama'),
+        ]);
+        const sum = await sumR.json();
+        const ol  = await olR.json();
+        renderReport(sum, ol);
+    } catch(e) {
+        body.innerHTML = `<div style="color:var(--red);padding:16px">Yüklenemedi: ${e.message}</div>`;
+    }
+}
+
+function renderReport(sum, ol) {
+    const body = document.getElementById('reportBody');
+    if (!body) return;
+    const bm = sum.by_mode || {};
+    const total = sum.total_decisions || 0;
+
+    const fmtMs = v => v == null ? '—' : v < 1 ? '<1 ms' : Math.round(v) + ' ms';
+    const fmtPct = v => v == null ? '—' : Math.round(v*100) + '%';
+
+    const modeCard = (label, key, color) => {
+        const m = bm[key] || {};
+        const lat = m.latency_ms || {};
+        const actions = m.actions || {};
+        const totalM = Object.values(actions).reduce((a,b)=>a+b, 0);
+        const pctStab = totalM ? ((actions.STABILIZE||0)/totalM*100).toFixed(0) : 0;
+        const pctHover = totalM ? (((actions.HOVER||0)+(actions.HOLD||0))/totalM*100).toFixed(0) : 0;
+        return `
+        <div class="report-section">
+            <div class="report-section-title" style="color:${color}">${label}</div>
+            <div class="report-stat-row">
+                <span class="report-stat-label">Toplam karar</span>
+                <span class="report-stat-val" style="color:${color}">${m.count||0}</span>
+            </div>
+            <div class="report-stat-row">
+                <span class="report-stat-label">Ort. gecikme</span>
+                <span class="report-stat-val">${fmtMs(lat.avg)}</span>
+            </div>
+            <div class="report-stat-row">
+                <span class="report-stat-label">Min / Maks</span>
+                <span class="report-stat-val">${fmtMs(lat.min)} / ${fmtMs(lat.max)}</span>
+            </div>
+            <div class="report-stat-row" style="margin-bottom:8px">
+                <span class="report-stat-label">Kamera kullandı</span>
+                <span class="report-stat-val">${fmtPct(m.vision_rate)}</span>
+            </div>
+            <div class="report-bar-row">
+                <div class="report-bar-label"><span>STABILIZE</span><span>${pctStab}%</span></div>
+                <div class="report-bar-track">
+                    <div class="report-bar-fill" style="width:${pctStab}%;background:var(--red)"></div>
+                </div>
+            </div>
+            <div class="report-bar-row">
+                <div class="report-bar-label"><span>HOVER / HOLD</span><span>${pctHover}%</span></div>
+                <div class="report-bar-track">
+                    <div class="report-bar-fill" style="width:${pctHover}%;background:var(--green)"></div>
+                </div>
+            </div>
+        </div>`;
+    };
+
+    const accRule  = ACC.rule.n  ? Math.round(ACC.rule.c/ACC.rule.n*100)   : null;
+    const accAgent = ACC.agent.n ? Math.round(ACC.agent.c/ACC.agent.n*100) : null;
+
+    body.innerHTML = `
+        <div class="report-section">
+            <div class="report-section-title">🖥️ OTURUM GENELİ</div>
+            <div class="report-stat-row">
+                <span class="report-stat-label">Toplam karar</span>
+                <span class="report-stat-val">${total}</span>
+            </div>
+            <div class="report-stat-row">
+                <span class="report-stat-label">Aktif model</span>
+                <span class="report-stat-val" style="color:var(--teal)">${ol.configured_model||'—'}</span>
+            </div>
+            <div class="report-stat-row">
+                <span class="report-stat-label">Ollama durumu</span>
+                <span class="report-stat-val" style="color:${ol.reachable?'var(--green)':'var(--red)'}">${ol.reachable?'Hazır ✓':'Kapalı ✗'}</span>
+            </div>
+            <div class="report-stat-row">
+                <span class="report-stat-label">Doğruluk — Kural</span>
+                <span class="report-stat-val" style="color:var(--blue)">${accRule!=null?accRule+'% ('+ACC.rule.c+'/'+ACC.rule.n+')':'—'}</span>
+            </div>
+            <div class="report-stat-row">
+                <span class="report-stat-label">Doğruluk — Agent</span>
+                <span class="report-stat-val" style="color:var(--purple)">${accAgent!=null?accAgent+'% ('+ACC.agent.c+'/'+ACC.agent.n+')':'—'}</span>
+            </div>
+        </div>
+        ${modeCard('⊞ GELENEKSEL (IF/THEN)', 'traditional', 'var(--blue)')}
+        ${modeCard('★ AGENTİK AI', 'agentic', 'var(--purple)')}
+        ${modeCard('⚡ HİBRİT', 'hybrid', 'var(--green)')}
+        <button class="report-refresh-btn" onclick="loadReport()">🔄 Güncelle</button>
+    `;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Camera AI annotation badge
+// ─────────────────────────────────────────────────────────────────────────────
+let _aiBadgeTimer = null;
+function flashAiBadge() {
+    const el = document.getElementById('camAiBadge');
+    if (!el) return;
+    el.classList.add('visible');
+    clearTimeout(_aiBadgeTimer);
+    _aiBadgeTimer = setTimeout(() => el.classList.remove('visible'), 3000);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// "AI Düşünüyor" thinking indicator
+// ─────────────────────────────────────────────────────────────────────────────
+let _thinkingStart = null;
+let _thinkingInterval = null;
+
+function startThinking() {
+    const ov = document.getElementById('thinkingOverlay');
+    if (!ov) return;
+    ov.classList.add('active');
+    _thinkingStart = Date.now();
+    clearInterval(_thinkingInterval);
+    _thinkingInterval = setInterval(() => {
+        const el = document.getElementById('thinkingTimer');
+        if (el && _thinkingStart) {
+            el.textContent = ((Date.now() - _thinkingStart) / 1000).toFixed(1) + 's';
+        }
+    }, 100);
+}
+
+function stopThinking() {
+    const ov = document.getElementById('thinkingOverlay');
+    if (!ov) return;
+    ov.classList.remove('active');
+    clearInterval(_thinkingInterval);
+    _thinkingStart = null;
+}
+
+// Track when agent card last got a decision — if mode=agentic and >1s elapsed, show thinking
+let _lastAgentDecisionTs = 0;
+
+function maybeStartThinking() {
+    if (S.mode !== 'agentic') { stopThinking(); return; }
+    const elapsed = (Date.now() / 1000) - _lastAgentDecisionTs;
+    if (elapsed > 1.5 && drone_state_connected) {
+        startThinking();
+    }
+}
+
+const drone_state_connected = { val: false };  // mirror of drone_connected
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Latency race bars
+// ─────────────────────────────────────────────────────────────────────────────
+const _latencyHistory = { rule: [], agent: [], hybrid: [] };
+const MAX_LATENCY_AGENT = 8000;  // reference max for bar scaling
+
+function updateRaceBars(shadow) {
+    if (!shadow) return;
+    ['rule','agent','hybrid'].forEach(mode => {
+        const d = shadow[mode === 'hybrid' ? 'agent' : mode];
+        if (!d || d.latency_ms == null) return;
+        const ms = d.latency_ms;
+        _latencyHistory[mode].push(ms);
+        if (_latencyHistory[mode].length > 10) _latencyHistory[mode].shift();
+        const avg = _latencyHistory[mode].reduce((a,b)=>a+b,0) / _latencyHistory[mode].length;
+        const pct = mode === 'rule'
+            ? Math.min(avg / 10 * 3, 3)        // rule: <1ms → tiny bar but visible
+            : Math.min(avg / MAX_LATENCY_AGENT * 100, 100);
+
+        const bar = document.getElementById(`race${mode.charAt(0).toUpperCase()+mode.slice(1)}`);
+        const lbl = document.getElementById(`raceMs${mode.charAt(0).toUpperCase()+mode.slice(1)}`);
+        if (bar) {
+            bar.style.width = (mode === 'rule' ? Math.max(pct, 0.8) : pct) + '%';
+        }
+        if (lbl) {
+            lbl.textContent = avg < 1 ? '<1 ms' : Math.round(avg) + ' ms';
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Presentation flow
+// ─────────────────────────────────────────────────────────────────────────────
+const PF_STEPS = [
+    {
+        title: "Projeye Giriş — Problem Nedir?",
+        say: "Geleneksel dronlar kamera görmez, sadece sensöre tepki verir. 5 sensör × 5 eylem = 25 manuel kural yazmak — buna N×M entegrasyon çıkmazı diyoruz. Bu proje o problemi MCP + Agentic AI ile çözüyor.",
+        action: "💡 Slayt sunumunu göster: /sunum",
+        do: () => {},
+    },
+    {
+        title: "Geleneksel IF/THEN Sistemi — Anlık Tepki",
+        say: "GELENEKSEL moda geçiyorum. 'Kademeli Eğim' senaryosunu başlatıyorum. Sol kartta tam olarak hangi koşulun ateşlendiğini görün: IF tilt ≥ 30° → STABILIZE. 0.05 milisaniye. Deterministik. Ama kör — kamerayı hiç kullanmıyor.",
+        action: "🖱️ GELENEKSEL'e bas → ▶ Eğim butonuna bas",
+        do: async () => { setMode('traditional'); await startScenario('gradual_tilt'); },
+    },
+    {
+        title: "Agentic AI — Aynı Senaryo, Farklı Yaklaşım",
+        say: "AGENTİK moda geçiyorum. Dikkat edin — AI şu an DÜŞÜNÜYOR. Bu 4 saniye boşta geçmüyor: model kamera karesini okuyor, tilt açısını değerlendiriyor, bağlam kuruyor. Karar gelince gerekçeyi okuyun. Aynı sonuç, ama nedenini anlıyor.",
+        action: "🖱️ AGENTİK'e bas — 'AI ŞU AN DÜŞÜNÜYOR' animasyonunu göster",
+        do: async () => { setMode('agentic'); },
+    },
+    {
+        title: "KILLER DEMO — Kural Kör, AI Görüyor",
+        say: "Şimdi drone düz uçuyor — eğim sıfır. Sol kart: HOVER, tehlike yok diyor. Doğru mu? HAYIR. Çünkü önünde duvar var. Kural kamerayı GÖREMEZ. AI'yı NAVİGASYON moduna alıyorum — kamerayı bir yere tutun.",
+        action: "🖱️ 🎯 Engel butonuna bas → Navigasyon aç → Kamerayı bir şeye tut → Analiz Et",
+        do: async () => {
+            await startScenario('obstacle');
+            if (!_navPanelOpen) toggleNavPanel();
+        },
+    },
+    {
+        title: "Hibrit Sistem & Sonuçlar",
+        say: "HİBRİT mod: refleks katmanı her zaman güvende tutar (<1ms), AI arka planda daha akıllı kararlar alır. Gecikme karşılaştırmasına bakın: Kural <1ms, Agent ~4200ms, Hibrit ~1361ms. Doğruluk oranları her iki modda da yüksek — ama AI bağlam anlıyor, kural anlamıyor.",
+        action: "🖱️ HİBRİT'e bas — gecikme barlarını göster",
+        do: () => { setMode('hybrid'); },
+    },
+];
+let _pfIdx = 0;
+
+function openPF() {
+    _pfIdx = 0;
+    renderPF();
+    document.getElementById('presentationFlow').classList.add('visible');
+}
+function closePF() {
+    document.getElementById('presentationFlow').classList.remove('visible');
+}
+function pfStep(dir) {
+    _pfIdx = Math.max(0, Math.min(PF_STEPS.length - 1, _pfIdx + dir));
+    renderPF();
+}
+function renderPF() {
+    const step = PF_STEPS[_pfIdx];
+    document.getElementById('pfBadge').textContent = `ADIM ${_pfIdx+1} / ${PF_STEPS.length}`;
+    document.getElementById('pfTitle').textContent = step.title;
+    document.getElementById('pfSay').textContent = '💬 "' + step.say + '"';
+    document.getElementById('pfAction').textContent = step.action;
+    document.getElementById('pfNextBtn').textContent =
+        _pfIdx === PF_STEPS.length-1 ? 'Bitir ✓' : 'İleri ▶';
+
+    // Progress dots
+    const prog = document.getElementById('pfProgress');
+    if (prog) {
+        prog.innerHTML = PF_STEPS.map((_, i) =>
+            `<div class="pf-dot ${i < _pfIdx ? 'done' : i === _pfIdx ? 'current' : ''}"></div>`
+        ).join('');
+    }
+    // Run the step's automated action
+    if (typeof step.do === 'function') step.do();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Model switcher
+// ─────────────────────────────────────────────────────────────────────────────
+const MODEL_BTN_IDS = {
+    'llava:7b':                'mbLlava',
+    'qwen2.5vl:7b':            'mbQwen7',
+    'llama3.2-vision:latest':  'mbLlama32v',
+    'qwen2.5vl:32b':           'mbQwen32',
+};
+let _currentModel = 'llava:7b';
+
+function updateModelBtns(activeModel) {
+    _currentModel = activeModel;
+    Object.entries(MODEL_BTN_IDS).forEach(([name, id]) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.classList.toggle('active-model', name === activeModel);
+        btn.disabled = false;
+        btn.classList.remove('model-loading');
+    });
+    // Update Ollama badge text to show current model
+    const oTxt = document.getElementById('ollamaTxt');
+    if (oTxt && oTxt.textContent.includes('Hazır')) {
+        oTxt.textContent = `Ollama: ${activeModel} ✓`;
+    }
+}
+
+async function switchModel(name) {
+    if (name === _currentModel) return;
+    // Show loading state on all buttons
+    Object.values(MODEL_BTN_IDS).forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) { btn.disabled = true; }
+    });
+    const targetBtn = document.getElementById(MODEL_BTN_IDS[name]);
+    if (targetBtn) { targetBtn.classList.add('model-loading'); }
+
+    addLine('SYS', `Model değiştiriliyor: ${name}…`, 'INFO');
+    try {
+        const r = await fetch(`/api/model/switch/${encodeURIComponent(name)}`, { method: 'POST' });
+        const d = await r.json();
+        if (d.ok) {
+            updateModelBtns(name);
+            if (!d.model_available) {
+                addLine('SYS', `⚠ ${name} henüz indirilmemiş → ollama pull ${name}`, 'WARN');
+            } else {
+                addLine('SYS', `✓ Model: ${name} hazır`, 'INFO');
+            }
+        }
+    } catch(e) {
+        addLine('SYS', `Model değiştirme hatası: ${e.message}`, 'ERROR');
+        updateModelBtns(_currentModel); // revert
+    }
+}
+
+// Load current model on page open
+(async () => {
+    try {
+        const r = await fetch('/api/model');
+        const d = await r.json();
+        if (d.model) updateModelBtns(d.model);
+    } catch(_) {}
+    try {
+        const r = await fetch('/api/config/vision');
+        const d = await r.json();
+        applyVisionState(d.vision_enabled !== false);
+    } catch(_) {}
+    // Also load available models to enable/disable buttons accordingly
+    try {
+        const r = await fetch('/api/models/available');
+        const d = await r.json();
+        const available = new Set(d.models || []);
+        Object.entries(MODEL_BTN_IDS).forEach(([name, id]) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            if (!available.has(name) && name !== d.active) {
+                btn.title = `İndirilmemiş — ollama pull ${name}`;
+                btn.style.opacity = '.5';
+            }
+        });
+    } catch(_) {}
+})();
+
+// Handle model_change broadcast from server
+function handleModelChange(msg) {
+    updateModelBtns(msg.model);
+    const oTxt = document.getElementById('ollamaTxt');
+    const oBadge = document.getElementById('ollamaBadge');
+    if (oTxt && oBadge) {
+        if (msg.model_available) {
+            oBadge.className = 'badge ok';
+            oTxt.textContent = `Ollama: ${msg.model} ✓`;
+        } else {
+            oBadge.className = 'badge warn';
+            oTxt.textContent = `Ollama: ${msg.model} — indirilmemiş`;
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Vision toggle (safety valve — text-only agent if GPU is tight)
+// ─────────────────────────────────────────────────────────────────────────────
+let _visionOn = true;
+
+async function toggleVision() {
+    _visionOn = !_visionOn;
+    try {
+        await fetch(`/api/config/vision/${_visionOn ? 'on' : 'off'}`, { method: 'POST' });
+        applyVisionState(_visionOn);
+        addLine('CFG', `Agent görüş: ${_visionOn ? 'AÇIK (kamera+telemetri)' : 'KAPALI (sadece telemetri — hızlı)'}`, 'INFO');
+    } catch(e) { addLine('CFG', 'Görüş değiştirme hatası: ' + e.message, 'ERROR'); }
+}
+
+function applyVisionState(on) {
+    _visionOn = on;
+    const btn = document.getElementById('visionBtn');
+    if (btn) {
+        btn.classList.toggle('active-model', on);
+        btn.textContent = on ? '👁 GÖRÜŞ' : '👁 GÖRÜŞ KAPALI';
+        btn.style.opacity = on ? '1' : '.55';
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Config / threshold editor
+// ─────────────────────────────────────────────────────────────────────────────
+let _configOpen = false;
+
+function toggleConfig() {
+    _configOpen = !_configOpen;
+    document.getElementById('configPanel').classList.toggle('open', _configOpen);
+    if (_configOpen) loadCurrentConfig();
+}
+
+function closeConfig() {
+    _configOpen = false;
+    document.getElementById('configPanel').classList.remove('open');
+}
+
+async function loadCurrentConfig() {
+    try {
+        const r = await fetch('/api/config/thresholds');
+        const d = await r.json();
+        const map = {
+            cfgWarn: ['cfgWarnVal', d.tilt_warning, '°'],
+            cfgDanger: ['cfgDangerVal', d.tilt_danger, '°'],
+            cfgMotDef: ['cfgMotDefVal', d.motor_default, '%'],
+            cfgMotStab: ['cfgMotStabVal', d.motor_stabilize, '%'],
+            cfgMotEmrg: ['cfgMotEmrgVal', d.motor_emergency, '%'],
+        };
+        Object.entries(map).forEach(([slId, [lblId, val, unit]]) => {
+            const sl = document.getElementById(slId);
+            const lb = document.getElementById(lblId);
+            if (sl) sl.value = val;
+            if (lb) lb.textContent = val + unit;
+        });
+    } catch(e) {}
+}
+
+async function applyConfig() {
+    const get = id => parseFloat(document.getElementById(id)?.value ?? 0);
+    const body = {
+        tilt_warning:    get('cfgWarn'),
+        tilt_danger:     get('cfgDanger'),
+        motor_default:   get('cfgMotDef'),
+        motor_stabilize: get('cfgMotStab'),
+        motor_emergency: get('cfgMotEmrg'),
+    };
+    try {
+        const r = await fetch('/api/config/thresholds', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body),
+        });
+        const d = await r.json();
+        if (d.ok) {
+            addLine('CFG', 'Eşikler güncellendi: ' + (d.changed||[]).join(', '), 'INFO');
+            playTone(660, 0.15, 0.12);
+        }
+    } catch(e) { addLine('CFG', 'Güncelleme hatası: ' + e.message, 'ERROR'); }
+}
+
+async function resetConfig() {
+    try {
+        await fetch('/api/config/thresholds', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({tilt_warning:15,tilt_danger:30,motor_default:50,motor_stabilize:75,motor_emergency:100}),
+        });
+        await loadCurrentConfig();
+        addLine('CFG', 'Varsayılan eşikler geri yüklendi.', 'INFO');
+    } catch(e) {}
+}
+
+// Sync config display when server broadcasts a config_update
+function applyConfigUpdate(msg) {
+    const map = {
+        cfgWarn:    ['cfgWarnVal',    msg.tilt_warning,    '°'],
+        cfgDanger:  ['cfgDangerVal',  msg.tilt_danger,     '°'],
+        cfgMotDef:  ['cfgMotDefVal',  msg.motor_default,   '%'],
+        cfgMotStab: ['cfgMotStabVal', msg.motor_stabilize, '%'],
+        cfgMotEmrg: ['cfgMotEmrgVal', msg.motor_emergency, '%'],
+    };
+    Object.entries(map).forEach(([slId, [lblId, val, unit]]) => {
+        const sl = document.getElementById(slId);
+        const lb = document.getElementById(lblId);
+        if (sl && val != null) sl.value = val;
+        if (lb && val != null) lb.textContent = val + unit;
+    });
+    // Update tilt banner thresholds dynamically
+    _cfgWarn   = msg.tilt_warning   ?? _cfgWarn;
+    _cfgDanger = msg.tilt_danger    ?? _cfgDanger;
+}
+
+let _cfgWarn = 15, _cfgDanger = 30;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Audio alerts (Web Audio API — no external library)
+// ─────────────────────────────────────────────────────────────────────────────
+let _audioCtx = null;
+let _audioOn  = false;
+
+function toggleAudio() {
+    _audioOn = !_audioOn;
+    const btn = document.getElementById('audioBtn');
+    if (btn) {
+        btn.textContent = _audioOn ? '🔔' : '🔇';
+        btn.style.borderColor = _audioOn ? 'var(--yellow)' : 'var(--border)';
+        btn.style.color       = _audioOn ? 'var(--yellow)' : 'var(--dim)';
+    }
+    if (_audioOn && !_audioCtx) {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function playTone(freq, dur, vol = 0.12) {
+    if (!_audioOn || !_audioCtx) return;
+    try {
+        const osc  = _audioCtx.createOscillator();
+        const gain = _audioCtx.createGain();
+        osc.connect(gain); gain.connect(_audioCtx.destination);
+        osc.frequency.value = freq; osc.type = 'sine';
+        gain.gain.setValueAtTime(vol, _audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, _audioCtx.currentTime + dur);
+        osc.start(); osc.stop(_audioCtx.currentTime + dur);
+    } catch(_) {}
+}
+
+function playStabilizeAlert() {
+    playTone(523, 0.12, 0.18);
+    setTimeout(() => playTone(523, 0.12, 0.18), 150);
+}
+function playDecisionPing() { playTone(880, 0.06, 0.07); }
+function playBenchmarkDone() {
+    [523,659,784].forEach((f,i) => setTimeout(() => playTone(f, 0.15, 0.12), i*120));
+}
+
+// Hook audio into existing decision rendering
+const _origRenderDecision = renderDecision;
+renderDecision = function(e) {
+    _origRenderDecision(e);
+    if (e.extra?.action === 'STABILIZE' || e.extra?.action === 'EMERGENCY_STOP') {
+        playStabilizeAlert();
+    } else {
+        playDecisionPing();
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Log search / filter
+// ─────────────────────────────────────────────────────────────────────────────
+let _logFilter = '';
+
+function filterLog(term) {
+    _logFilter = term.toLowerCase();
+    const term_ = document.getElementById('terminal');
+    if (!term_) return;
+    Array.from(term_.children).forEach(line => {
+        const txt = line.textContent.toLowerCase();
+        line.style.display = (!_logFilter || txt.includes(_logFilter)) ? '' : 'none';
+    });
+}
+
+// Override addLine to respect filter
+const _origAddLine = addLine;
+addLine = function(source, message, level = 'INFO') {
+    _origAddLine(source, message, level);
+    if (_logFilter) {
+        const term_ = document.getElementById('terminal');
+        if (term_) {
+            const last = term_.lastElementChild;
+            if (last && !last.textContent.toLowerCase().includes(_logFilter)) {
+                last.style.display = 'none';
+            }
+        }
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quick auto-benchmark
+// ─────────────────────────────────────────────────────────────────────────────
+async function runQuickBenchmark() {
+    const btn = document.getElementById('bncBtn');
+    if (btn) { btn.textContent = '⏳ 30s…'; btn.disabled = true; }
+    addLine('BNC', 'Otomatik karşılaştırma başlatıldı (30s: 15s Kural + 15s Agent)…', 'INFO');
+    try {
+        const r = await fetch('/api/benchmark/quick', { method: 'POST' });
+        const d = await r.json();
+        if (d.ok) addLine('BNC', d.message, 'INFO');
+    } catch(e) {
+        addLine('BNC', 'Benchmark hatası: ' + e.message, 'ERROR');
+        if (btn) { btn.textContent = '⚡ KIYASLA'; btn.disabled = false; }
+    }
+    // Re-enable after 32s
+    setTimeout(() => {
+        if (btn) { btn.textContent = '⚡ KIYASLA'; btn.disabled = false; }
+    }, 32000);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Toast notifications
+// ─────────────────────────────────────────────────────────────────────────────
+const TOAST_ICONS = { ok:'✓', warn:'⚠', err:'✕', info:'ℹ', agent:'★' };
+
+function toast(title, msg = '', kind = 'info', ttl = 4000) {
+    const host = document.getElementById('toastHost');
+    if (!host) return;
+    const el = document.createElement('div');
+    el.className = `toast ${kind}`;
+    el.innerHTML =
+        `<div class="toast-icon">${TOAST_ICONS[kind] || 'ℹ'}</div>` +
+        `<div class="toast-body"><div class="toast-title">${escHtml(title)}</div>` +
+        (msg ? `<div class="toast-msg">${escHtml(msg)}</div>` : '') + `</div>`;
+    host.appendChild(el);
+    // Cap to 4 visible
+    while (host.children.length > 4) host.removeChild(host.firstChild);
+    setTimeout(() => {
+        el.classList.add('removing');
+        setTimeout(() => el.remove(), 320);
+    }, ttl);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Help overlay
+// ─────────────────────────────────────────────────────────────────────────────
+function openHelp()  { document.getElementById('helpOverlay').classList.add('open'); }
+function closeHelp() { document.getElementById('helpOverlay').classList.remove('open'); }
+function toggleHelp() {
+    document.getElementById('helpOverlay').classList.toggle('open');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Keyboard shortcuts (live-demo control)
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+    // Ignore when typing in an input
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+    const k = e.key.toLowerCase();
+    const map = {
+        '1': () => setMode('traditional'),
+        '2': () => setMode('agentic'),
+        '3': () => setMode('hybrid'),
+        'n': () => toggleNavPanel(),
+        'q': () => startScenario('calm'),
+        'w': () => startScenario('gradual_tilt'),
+        'e': () => startScenario('critical'),
+        'r': () => startScenario('obstacle'),
+        'x': () => stopScenario(),
+        'a': () => runNavAnalysis(),
+        'p': () => openPF(),
+        'b': () => runQuickBenchmark(),
+        'm': () => toggleReport(),
+        't': () => toggleConfig(),
+        'v': () => toggleVision(),
+        's': () => toggleAudio(),
+        '?': () => toggleHelp(),
+    };
+    if (e.key === 'Escape') {
+        closeHelp(); closeConfig(); closeReport();
+        return;
+    }
+    if (e.key === '?' || (e.shiftKey && k === '7')) { toggleHelp(); e.preventDefault(); return; }
+    if (map[k]) { map[k](); e.preventDefault(); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Boot splash sequence
+// ─────────────────────────────────────────────────────────────────────────────
+async function runBootSequence() {
+    const steps = [
+        ['WebSocket bağlantı katmanı hazırlanıyor…', 18],
+        ['FastMCP sunucusu yükleniyor (kaynaklar + araçlar)…', 38],
+        ['Pydantic-AI ajanı başlatılıyor…', 58],
+        ['Ollama yerel model durumu kontrol ediliyor…', 78],
+        ['Kontrol döngüleri devrede — sistem hazır.', 100],
+    ];
+    const bar = document.getElementById('bootBar');
+    const txt = document.getElementById('bootSteps');
+    for (const [msg, pct] of steps) {
+        if (txt) txt.textContent = '▸ ' + msg;
+        if (bar) bar.style.width = pct + '%';
+        await new Promise(r => setTimeout(r, 380));
+    }
+    await new Promise(r => setTimeout(r, 300));
+    const splash = document.getElementById('bootSplash');
+    if (splash) splash.classList.add('gone');
+    setTimeout(() => splash && splash.remove(), 700);
+    toast('Sistem hazır', 'Kısayollar için ? tuşuna bas', 'ok', 5000);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hook toasts into key events (mode change, drone status, errors)
+// ─────────────────────────────────────────────────────────────────────────────
+const _origApplyMode = applyMode;
+applyMode = function(mode) {
+    const changed = (S.mode !== mode);
+    _origApplyMode(mode);
+    if (changed) {
+        const labels = { traditional:'Geleneksel (IF/THEN)', agentic:'Agentik AI (LLM)', hybrid:'Hibrit' };
+        const kinds  = { traditional:'info', agentic:'agent', hybrid:'ok' };
+        toast('Mod değişti', labels[mode] || mode, kinds[mode] || 'info', 3000);
+    }
+};
+
+const _origSetDroneStatus = setDroneStatus;
+setDroneStatus = function(connected) {
+    const was = S._droneWas;
+    _origSetDroneStatus(connected);
+    if (was !== connected) {
+        S._droneWas = connected;
+        if (connected) toast('Drone bağlandı', 'Kamera + sensör akışı aktif', 'ok', 3000);
+        else            toast('Drone bağlantısı kesildi', '', 'warn', 3000);
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Boot
+// ─────────────────────────────────────────────────────────────────────────────
+connect();
+runBootSequence();
+// Initialize chart (draw empty state)
+window.addEventListener('load', () => {
+    drawChart();
+    // Redraw on window resize
+    window.addEventListener('resize', () => requestAnimationFrame(drawChart));
+});
+</script>
+</body>
+</html>

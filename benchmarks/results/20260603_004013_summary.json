@@ -1,0 +1,241 @@
+{
+  "meta": {
+    "timestamp": "2026-06-03T00:40:13",
+    "model": "mock-vision-controller",
+    "using_ollama": false,
+    "vision": false,
+    "repeat": 1,
+    "scenarios": [
+      "stable_hover",
+      "gradual_tilt",
+      "sudden_gust",
+      "oscillation",
+      "sensor_dropout"
+    ],
+    "total_steps": 224
+  },
+  "overall": {
+    "total": 224,
+    "by_mode": {
+      "traditional": {
+        "count": 112,
+        "latency_ms": {
+          "avg": 0.01,
+          "min": 0.0,
+          "max": 0.02,
+          "p50": 0.01,
+          "p95": 0.01
+        },
+        "actions": {
+          "HOVER": 58,
+          "STABILIZE": 51,
+          "HOLD": 3
+        },
+        "errors": 0,
+        "avg_confidence": 1.0
+      },
+      "agentic": {
+        "count": 112,
+        "latency_ms": {
+          "avg": 114.58,
+          "min": 46.97,
+          "max": 185.52,
+          "p50": 118.3,
+          "p95": 179.72
+        },
+        "actions": {
+          "HOVER": 61,
+          "STABILIZE": 51
+        },
+        "errors": 0,
+        "avg_confidence": 0.862
+      }
+    }
+  },
+  "per_scenario": {
+    "stable_hover": {
+      "total": 40,
+      "by_mode": {
+        "traditional": {
+          "count": 20,
+          "latency_ms": {
+            "avg": 0.01,
+            "min": 0.0,
+            "max": 0.02,
+            "p50": 0.0,
+            "p95": 0.01
+          },
+          "actions": {
+            "HOVER": 20
+          },
+          "errors": 0,
+          "avg_confidence": 1.0
+        },
+        "agentic": {
+          "count": 20,
+          "latency_ms": {
+            "avg": 101.67,
+            "min": 46.97,
+            "max": 172.83,
+            "p50": 96.51,
+            "p95": 160.08
+          },
+          "actions": {
+            "HOVER": 20
+          },
+          "errors": 0,
+          "avg_confidence": 0.88
+        }
+      }
+    },
+    "gradual_tilt": {
+      "total": 48,
+      "by_mode": {
+        "traditional": {
+          "count": 24,
+          "latency_ms": {
+            "avg": 0.01,
+            "min": 0.0,
+            "max": 0.02,
+            "p50": 0.01,
+            "p95": 0.01
+          },
+          "actions": {
+            "HOVER": 9,
+            "STABILIZE": 15
+          },
+          "errors": 0,
+          "avg_confidence": 1.0
+        },
+        "agentic": {
+          "count": 24,
+          "latency_ms": {
+            "avg": 122.56,
+            "min": 53.31,
+            "max": 181.97,
+            "p50": 129.02,
+            "p95": 177.9
+          },
+          "actions": {
+            "HOVER": 9,
+            "STABILIZE": 15
+          },
+          "errors": 0,
+          "avg_confidence": 0.862
+        }
+      }
+    },
+    "sudden_gust": {
+      "total": 40,
+      "by_mode": {
+        "traditional": {
+          "count": 20,
+          "latency_ms": {
+            "avg": 0.01,
+            "min": 0.01,
+            "max": 0.02,
+            "p50": 0.01,
+            "p95": 0.01
+          },
+          "actions": {
+            "HOVER": 11,
+            "STABILIZE": 9
+          },
+          "errors": 0,
+          "avg_confidence": 1.0
+        },
+        "agentic": {
+          "count": 20,
+          "latency_ms": {
+            "avg": 110.03,
+            "min": 58.85,
+            "max": 183.87,
+            "p50": 98.63,
+            "p95": 176.73
+          },
+          "actions": {
+            "HOVER": 11,
+            "STABILIZE": 9
+          },
+          "errors": 0,
+          "avg_confidence": 0.877
+        }
+      }
+    },
+    "oscillation": {
+      "total": 60,
+      "by_mode": {
+        "traditional": {
+          "count": 30,
+          "latency_ms": {
+            "avg": 0.01,
+            "min": 0.01,
+            "max": 0.02,
+            "p50": 0.01,
+            "p95": 0.01
+          },
+          "actions": {
+            "STABILIZE": 18,
+            "HOVER": 12
+          },
+          "errors": 0,
+          "avg_confidence": 1.0
+        },
+        "agentic": {
+          "count": 30,
+          "latency_ms": {
+            "avg": 115.6,
+            "min": 52.2,
+            "max": 185.52,
+            "p50": 107.36,
+            "p95": 176.42
+          },
+          "actions": {
+            "STABILIZE": 18,
+            "HOVER": 12
+          },
+          "errors": 0,
+          "avg_confidence": 0.847
+        }
+      }
+    },
+    "sensor_dropout": {
+      "total": 36,
+      "by_mode": {
+        "traditional": {
+          "count": 18,
+          "latency_ms": {
+            "avg": 0.01,
+            "min": 0.0,
+            "max": 0.02,
+            "p50": 0.01,
+            "p95": 0.01
+          },
+          "actions": {
+            "HOVER": 6,
+            "STABILIZE": 9,
+            "HOLD": 3
+          },
+          "errors": 0,
+          "avg_confidence": 1.0
+        },
+        "agentic": {
+          "count": 18,
+          "latency_ms": {
+            "avg": 121.62,
+            "min": 47.19,
+            "max": 184.83,
+            "p50": 120.17,
+            "p95": 182.13
+          },
+          "actions": {
+            "HOVER": 9,
+            "STABILIZE": 9
+          },
+          "errors": 0,
+          "avg_confidence": 0.85
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "meta": {
+    "timestamp": "2026-06-02T06:31:45",
+    "model": "mock-vision-controller",
+    "using_ollama": false,
+    "vision": false,
+    "repeat": 1,
+    "scenarios": [
+      "stable_hover"
+    ],
+    "total_steps": 40
+  },
+  "overall": {
+    "total": 40,
+    "by_mode": {
+      "traditional": {
+        "count": 20,
+        "latency_ms": {
+          "avg": 0.0,
+          "min": 0.0,
+          "max": 0.01,
+          "p50": 0.0,
+          "p95": 0.01
+        },
+        "actions": {
+          "HOVER": 20
+        },
+        "errors": 0,
+        "avg_confidence": 1.0
+      },
+      "agentic": {
+        "count": 20,
+        "latency_ms": {
+          "avg": 101.02,
+          "min": 47.26,
+          "max": 172.24,
+          "p50": 94.89,
+          "p95": 159.29
+        },
+        "actions": {
+          "HOVER": 20
+        },
+        "errors": 0,
+        "avg_confidence": 0.88
+      }
+    }
+  },
+  "per_scenario": {
+    "stable_hover": {
+      "total": 40,
+      "by_mode": {
+        "traditional": {
+          "count": 20,
+          "latency_ms": {
+            "avg": 0.0,
+            "min": 0.0,
+            "max": 0.01,
+            "p50": 0.0,
+            "p95": 0.01
+          },
+          "actions": {
+            "HOVER": 20
+          },
+          "errors": 0,
+          "avg_confidence": 1.0
+        },
+        "agentic": {
+          "count": 20,
+          "latency_ms": {
+            "avg": 101.02,
+            "min": 47.26,
+            "max": 172.24,
+            "p50": 94.89,
+            "p95": 159.29
+          },
+          "actions": {
+            "HOVER": 20
+          },
+          "errors": 0,
+          "avg_confidence": 0.88
+        }
+      }
+    }
+  }
+}
