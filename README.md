@@ -49,12 +49,18 @@ camera + IMU  ──WS──►  FastAPI WebSocket Hub ──►  DroneState (fr
 
 ### 1. Ön gereksinimler
 
-| Araç | Kurulum |
-|------|---------|
-| Python 3.11+ | `sudo apt install python3.11` |
-| [uv](https://docs.astral.sh/uv/) | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| [Ollama](https://ollama.com/) | `curl -fsSL https://ollama.com/install.sh \| sh` |
-| openssl | genellikle kurulu gelir |
+**Linux (Ubuntu/Kubuntu):**
+```bash
+sudo apt install python3.11 openssl
+curl -LsSf https://astral.sh/uv/install.sh | sh
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**Windows:**
+- Python 3.11: [python.org/downloads](https://www.python.org/downloads/) — kurucudan "Add to PATH" kutusunu işaretle
+- uv: PowerShell'de `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`
+- Ollama: [ollama.com/download](https://ollama.com/download) — Windows kurucusu var, direkt indir
+- Git: [git-scm.com](https://git-scm.com/download/win) — yoksa kur
 
 ### 2. Repoyu klonla ve bağımlılıkları kur
 
@@ -66,8 +72,14 @@ uv sync
 
 ### 3. Ortam dosyasını oluştur
 
+**Linux:**
 ```bash
 cp .env.example .env
+```
+
+**Windows (PowerShell):**
+```powershell
+Copy-Item .env.example .env
 ```
 
 `.env` içinde `OLLAMA_MODEL` ve `OLLAMA_BASE_URL` değerlerini kontrol et — varsayılanlar tek makineli demo için yeterli.
@@ -82,13 +94,21 @@ ollama pull llava:7b          # varsayılan, ~4.7 GB
 ### 5. HTTPS sertifikası oluştur (telefon kamerası için zorunlu)
 
 Telefon kamerası (`getUserMedia`) LAN üzerinde **HTTPS gerektiriyor**.
-Kendi bilgisayarının IP adresini öğren (`ip a` veya `hostname -I`), sonra:
+Kendi IP adresini öğren — Windows'ta `ipconfig`, Linux'ta `ip a` — sonra:
 
+**Linux:**
 ```bash
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem \
   -days 365 -nodes -subj "/CN=192.168.X.X"
-# 192.168.X.X yerine kendi IP'ni yaz
 ```
+
+**Windows (PowerShell — openssl Git ile birlikte gelir):**
+```powershell
+& "C:\Program Files\Git\usr\bin\openssl.exe" req -x509 -newkey rsa:4096 `
+  -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=192.168.X.X"
+```
+
+Her iki durumda da `192.168.X.X` yerine kendi IP'ni yaz.
 
 > `cert.pem` / `key.pem` dosyaları `.gitignore`'dadır, repoya gitmez — her makine kendi sertifikasını üretmeli.
 
